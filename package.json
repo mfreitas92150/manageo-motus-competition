@@ -1,0 +1,31 @@
+{
+  "name": "manageo-motus-competition",
+  "version": "1.0.0",
+  "description": "manageo-motus-competition",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon server/index.js",
+    "build": "cd client && npm install && npm run build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mfreitas92150/manageo-motus-competition.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mfreitas92150/manageo-motus-competition/issues"
+  },
+  "homepage": "https://github.com/mfreitas92150/manageo-motus-competition#readme",
+  "dependencies": {
+    "express": "^4.17.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  },
+  "engines": {
+    "node": "14.17.5"
+  }
+}
