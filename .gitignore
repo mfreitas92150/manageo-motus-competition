@@ -7,7 +7,6 @@
 .pnp.js
 
 # Client
-/client/src/auth_config.json
 
 # testing
 /coverage
