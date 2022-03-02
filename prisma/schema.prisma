@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model cop_user {
+  email String @id
+  role String @default("USER")
+  validate Boolean @default(false)
+}
+
+model cop_word {
+  word String @id
+}
+
+model cop_ranking {
+  email String @id
+  rank Int
+}
+
+model cop_user_guess {
+  id Int @id @default(autoincrement())
+  create_at DateTime   @default(now())
+  email String
+  word String
+  guess_try Int
+  guess String
+}

@@ -21,7 +21,12 @@
   },
   "homepage": "https://github.com/mfreitas92150/manageo-motus-competition#readme",
   "dependencies": {
-    "express": "^4.17.2"
+    "@prisma/client": "^3.9.2",
+    "aa-sqlite": "^1.0.29",
+    "async-csv": "^2.1.3",
+    "express": "^4.17.2",
+    "prisma": "^3.9.2",
+    "sqlite3": "^5.0.2"
   },
   "devDependencies": {
     "nodemon": "^2.0.15"

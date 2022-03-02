@@ -1,0 +1,61 @@
+import React from "react";
+
+import { useAuth0 } from "@auth0/auth0-react";
+import { Button, Col, Container, Row, Tab, Tabs } from "react-bootstrap";
+
+
+import "./App.css";
+
+function App() {
+  const [data, setData] = React.useState(null);
+  const { loginWithRedirect, logout, isAuthenticated, isLoading, user } = useAuth0();
+
+  console.info(user)
+
+  return (<>
+    <Row className="App-header">
+      <Col xs={1}><img className="App-header-logo-img" src="https://www.manageo-static.com/auth0/logo/img/badge.png" /></Col>
+      <Col xs={6} className="App-header-name">mMotus</Col>
+      <Col xs={3}>
+        {!isAuthenticated && <Button size='sm' variant="info" onClick={loginWithRedirect}>Login</Button>}
+        {isAuthenticated && <Button size='sm' variant="info" onClick={logout}>
+          <FontAwesomeIcon icon="fa-solid fa-arrow-right-to-bracket" />
+        </Button>}
+      </Col>
+    </Row>
+  </>
+
+  );
+}
+
+{/* <Container className="App">
+
+<Row className="App-header">
+  <Col xs={1}><img  src="https://www.manageo-static.com/auth0/logo/img/badge.png" /></Col>
+  <Col xs={9}><h1>mMotus</h1></Col>
+  <Col xs={2}>
+    <div style={{ display: "flex", paddingTop: "5px" }}>
+      {!isAuthenticated && <Button size='sm' variant="info" onClick={loginWithRedirect}>Login</Button>}
+      {isAuthenticated && <Button size='sm' variant="info" onClick={logout}>Logout</Button>}
+      {isAuthenticated && (
+        <p>{user.email}</p>
+      )}
+    </div>
+  </Col>
+</Row> */}
+{/*       
+<header className="App-header">
+  <img src={logo} className="App-logo" alt="logo" />
+  <p>{!data ? "Loading..." : data}</p>
+</header>
+{!isAuthenticated && <button onClick={() => loginWithRedirect()}>Log In</button>}
+{isAuthenticated && <button onClick={() => logout({ returnTo: window.location.origin })}>Log Out</button>}
+{isAuthenticated && (
+  <div>
+    <img src={user.picture} alt={user.name} />
+    <h2>{user.name}</h2>
+    <p>{user.email}</p>
+  </div>
+)} */}
+
+export default App;
