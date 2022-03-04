@@ -59,9 +59,40 @@ app.put("/api/user", async (req, res) => {
     })
 })
 
+app.post("/api/user/rank", async (req, res) => {
+    console.info(req.body)
+
+    const user = await prisma.cop_ranking.findUnique({
+        where: {
+            email: req.body.email,
+        },
+    })
+    console.info(user)
+    if (user) {
+        console.info("update")
+        await prisma.cop_ranking.update({
+            where: {
+                email: req.body.email,
+            },
+            data: {
+                rank: req.body.point + user.rank,
+            },
+        })
+    } else {
+        console.info("create")
+        await prisma.cop_ranking.create({
+            data: {
+                email: req.body.email,
+                rank: req.body.point
+            }
+        })
+    }
+
+})
+
 app.post("/api/user/guess", async (req, res) => {
     const currentDate = Date.now()
-    
+
     await prisma.cop_user.create({
         data:
         {
@@ -91,6 +122,17 @@ app.delete("/api/user", async (req, res) => {
         }
     })
 });
+
+app.get("/api/ranking", async (req, res) => {
+    const ranking = await prisma.cop_ranking.findMany({
+        orderBy: [
+            {
+                rank: 'desc',
+            }
+        ]
+    })
+    res.send(ranking)
+})
 
 app.get("/api/word", async (req, res) => {
     const index = getRandomInt(mots.length - 1);

@@ -216,12 +216,12 @@ export default function MiniDrawer() {
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
         {!isAuthenticated && <Typography paragraph>
-          Connectez vous
+          Connectez vous <LoginIcon  onClick={() => loginWithRedirect()} />
         </Typography>}
         {isAuthenticated && !state.validate && <Typography paragraph>
           Vous n'êtes pas validé par le maitre du jeux.
         </Typography>}
-        {state.validate && state.page === 'gaming' && <Gaming />}
+        {state.validate && state.page === 'gaming' && <Gaming user={user}/>}
         {state.validate && state.page === 'ranking' && <Ranking />}
         {state.role === 'ADMIN' && state.page === 'admin' && <Admin />}
       </Box>

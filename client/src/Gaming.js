@@ -103,7 +103,7 @@ export default function Gaming({ user }) {
                 },
                 body: JSON.stringify({
                     ...user,
-                    guesses: state.guesses
+                    point: numberOfGuess - state.currentLigne
                 })
             })
         }
@@ -180,6 +180,7 @@ export default function Gaming({ user }) {
             <ThumbUpIcon />
         </GreenTypography>}
         <Box sx={{}}>
+            {state.word}
             {rows}
         </Box>
     </Container>
