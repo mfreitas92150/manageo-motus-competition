@@ -6,9 +6,13 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import BackspaceIcon from '@mui/icons-material/Backspace';
+import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
 
 import useEventListener from '@use-it/event-listener'
 import { Container } from '@mui/material';
+
+import Button from '@mui/material/Button';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -19,6 +23,10 @@ const Item = styled(Paper)(({ theme }) => ({
     color: theme.palette.text.secondary,
 }));
 
+const KeyBoardItem = styled(Button)(({ theme }) => ({
+
+}));
+
 const MyStack = styled(Stack)(({ }) => ({
     marginTop: "10px"
 }))
@@ -26,6 +34,26 @@ const MyStack = styled(Stack)(({ }) => ({
 const GreenTypography = styled(Typography)({
     color: '#71CC51'
 })
+
+
+const MyBox = styled(Box)({
+    margin: '20px 20%'
+})
+
+const MyRow = styled(Box)({
+    margin: '5px 20%'
+})
+
+const MyBackspaceIcon = styled(BackspaceIcon)({
+    width: '15px',
+    height: '15px'
+})
+
+const MySubdirectoryArrowLeftIcon = styled(SubdirectoryArrowLeftIcon)({
+    width: '15px',
+    height: '15px'
+})
+
 
 export default function Gaming({ user }) {
 
@@ -55,14 +83,17 @@ export default function Gaming({ user }) {
 
     const removeChar = () => {
         const guess = [...state.guesses[state.currentLigne]]
-        guess.pop()
-        const guesses = [...state.guesses]
-        guesses[state.currentLigne] = guess
-        setState({
-            ...state,
-            currentGuess: guess,
-            guesses
-        })
+        if (guess.length > 1) {
+            guess.pop()
+            const guesses = [...state.guesses]
+            guesses[state.currentLigne] = guess
+            setState({
+                ...state,
+                currentGuess: guess,
+                guesses
+            })
+        }
+
     }
 
     const checkWord = () => {
@@ -172,6 +203,19 @@ export default function Gaming({ user }) {
         }
     }
 
+    const getKeyBoardItem = (c) => {
+        if (c === 'DEL') {
+            return <KeyBoardItem variant='outlined' onClick={removeChar}><MyBackspaceIcon /></KeyBoardItem>
+        }
+        if (c === 'ENTER') {
+            return <KeyBoardItem variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
+        }
+        return <KeyBoardItem variant='outlined' onClick={() => addChar(c)}>{c}</KeyBoardItem>
+    }
+
+    const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map(c => getKeyBoardItem(c))
+    const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map(c => getKeyBoardItem(c))
+    const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map(c => getKeyBoardItem(c))
 
     return state.word ? (<Container>
         {state.success && <GreenTypography>
@@ -179,10 +223,19 @@ export default function Gaming({ user }) {
             {`Réussi. Vous gagnez ${numberOfGuess - state.currentLigne} points`}
             <ThumbUpIcon />
         </GreenTypography>}
-        <Box sx={{}}>
+        <MyBox>
             {state.word}
             {rows}
-        </Box>
+        </MyBox>
+        <MyRow>
+            <Stack direction="row" spacing={1}>{keyboardRow1}</Stack>
+        </MyRow>
+        <MyRow>
+            <Stack direction="row" spacing={1}>{keyboardRow2}</Stack>
+        </MyRow>
+        <MyRow>
+            <Stack direction="row" spacing={1}>{keyboardRow3}</Stack>
+        </MyRow>
     </Container>
     ) : (
         <Typography paragraph>
