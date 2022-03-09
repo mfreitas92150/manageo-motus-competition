@@ -18,6 +18,7 @@ model cop_user {
 
 model cop_word {
   word String @id
+  affected_at DateTime
 }
 
 model cop_ranking {

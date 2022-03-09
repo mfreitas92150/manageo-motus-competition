@@ -2,6 +2,8 @@ const express = require("express");
 const path = require('path');
 const prismaClient = require('@prisma/client');
 const mots = require('./mots.js')
+const datefns = require("date-fns");
+
 const prisma = new prismaClient.PrismaClient()
 
 const PORT = process.env.PORT || 3001;
@@ -135,18 +137,76 @@ app.get("/api/ranking", async (req, res) => {
 })
 
 app.get("/api/word", async (req, res) => {
-    const index = getRandomInt(mots.length - 1);
-    const word = mots[index].toUpperCase();
-    res.send({ word })
+    if (process.env.TEST_MODE) {
+        res.send({ word: "TESTER" })
+        return;
+    }
+    const currrentDate = new Date();
+    const currentDateMinus5 = datefns.subMinutes(currrentDate, 5)
+    const wordFromDb = await prisma.cop_word.findFirst({
+        where: {
+            affected_at: {
+                gte: currentDateMinus5,
+                lt: currrentDate
+            }
+        }
+    })
+    if (wordFromDb) {
+        res.send({ word: wordFromDb.word })
+    } else {
+        const index = getRandomInt(mots.length - 1);
+        const word = mots[index].toUpperCase();
+        await prisma.cop_word.create({
+            data: {
+                word,
+                affected_at: currrentDate
+            }
+        })
+        res.send({ word })
+    }
+
 });
 
 app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
+const validWord = (word, guess) => {
+    const validWord = word.substring(1).split('')
+    let charToFind = word.substring(1).split('')
+    const guessWord = guess.filter((g, index) => index > 0).map(g => g.char)
+
+    return [
+        {
+            char: word.substring(0, 1),
+            state: 2
+        },
+        ...guessWord.map((g, index) => {
+            const wChar = validWord[index];
+            let state = 0;
+            if (wChar === g) {
+                state = 2
+                var index = charToFind.indexOf(g);
+                charToFind = charToFind.splice(index, 1);
+            } else if (charToFind.includes(g)) {
+                state = 1
+                var index = charToFind.indexOf(g);
+                charToFind = charToFind.splice(index, 1);
+            }
+            return {
+                char: g,
+                state
+            }
+        })]
+}
+
 app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
 
+    if (process.env.TEST_MODE) {
+        console.info("Mode test")
+    }
+    
 });
 
 

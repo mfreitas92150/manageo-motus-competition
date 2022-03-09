@@ -54,7 +54,7 @@ export default function Admin() {
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
-      <AdminUser />
+        <AdminUser />
       </TabPanel>
     </Box>
   );

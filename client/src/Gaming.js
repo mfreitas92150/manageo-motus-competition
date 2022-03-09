@@ -21,10 +21,11 @@ const Item = styled(Paper)(({ theme }) => ({
     textAlign: 'center',
     width: '50px',
     color: theme.palette.text.secondary,
+    fontWeight: 'bold',
 }));
 
-const KeyBoardItem = styled(Button)(({ theme }) => ({
-
+const KeyBoardItem = styled(Button)(() => ({
+    
 }));
 
 const MyStack = styled(Stack)(({ }) => ({
@@ -37,11 +38,11 @@ const GreenTypography = styled(Typography)({
 
 
 const MyBox = styled(Box)({
-    margin: '20px 20%'
+    margin: '20px 20px'
 })
 
 const MyRow = styled(Box)({
-    margin: '5px 20%'
+    margin: '5px 20px'
 })
 
 const MyBackspaceIcon = styled(BackspaceIcon)({
@@ -96,35 +97,42 @@ export default function Gaming({ user }) {
 
     }
 
+    const validWord = (word, guess) => {
+        const validWord = word.substring(1).split('')
+        let charToFind = word.substring(1).split('')
+        const guessWord = guess.filter((g, index) => index > 0).map(g => g.char)
+    
+        return [
+            {
+                char: word.substring(0, 1),
+                state: 2
+            },
+            ...guessWord.map((g, index) => {
+                const wChar = validWord[index];
+                let state = 0;
+                if (wChar === g) {
+                    state = 2
+                    var index = charToFind.indexOf(g);
+                    charToFind = charToFind.splice(index, 1);
+                } else if (charToFind.includes(g)) {
+                    state = 1
+                    var index = charToFind.indexOf(g);
+                    charToFind = charToFind.splice(index, 1);
+                }
+                return {
+                    char: g,
+                    state
+                }
+            })]
+    }
+    
     const checkWord = () => {
-
         const guess = [...state.guesses[state.currentLigne]]
         const word = state.word
-        const checkedGuess = [guess[0]]
-        for (let i = 1; i < word.length; i++) {
-            const guessChar = guess[i].char;
-
-            if (word[i] === guessChar) {
-                checkedGuess.push({
-                    char: guessChar,
-                    state: 2
-                })
-            } else if (word.substring(1).includes(guessChar)) {
-                checkedGuess.push({
-                    char: guessChar,
-                    state: 1
-                })
-            } else {
-                checkedGuess.push({
-                    char: guessChar,
-                    state: 0
-                })
-            }
-        }
+        const result = validWord(word, guess)
         const guesses = [...state.guesses]
-        guesses[state.currentLigne] = checkedGuess
-        const currentGuess = String(state.currentGuess.map(g => g.char)).replaceAll(',', '')
-        const success = currentGuess === state.word;
+        guesses[state.currentLigne] = result
+        const success = !result.find(c => c.state !== 2);
         if (success) {
             fetch("/api/user/rank", {
                 method: "POST",
@@ -195,27 +203,27 @@ export default function Gaming({ user }) {
                 const char = guess.length > j ? guess[j].word : " "
                 const colorIndex = guess.length > j ? guess[j].state : 0
                 const style = colorIndex === 0 ? {} : {
-                    backgroundColor: colorIndex === 1 ? "#E13D31" : "#3798EC"
+                    backgroundColor: colorIndex === 1 ? "#FEF83C" : "#388AEA"
                 }
                 items.push(<Item key={j} style={style}>{guess.length > j ? guess[j].char : " "}</Item>)
             }
-            rows.push(<MyStack direction="row" spacing={2} key={i} style={{}}>{items}</MyStack>)
+            rows.push(<MyStack direction="row" spacing={1} key={i}>{items}</MyStack>)
         }
     }
 
-    const getKeyBoardItem = (c) => {
+    const getKeyBoardItem = (c, key) => {
         if (c === 'DEL') {
-            return <KeyBoardItem variant='outlined' onClick={removeChar}><MyBackspaceIcon /></KeyBoardItem>
+            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={removeChar}><MyBackspaceIcon /></KeyBoardItem>
         }
         if (c === 'ENTER') {
-            return <KeyBoardItem variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
+            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
         }
-        return <KeyBoardItem variant='outlined' onClick={() => addChar(c)}>{c}</KeyBoardItem>
+        return <KeyBoardItem size='small' key={key} variant='outlined' onClick={() => addChar(c)}>{c}</KeyBoardItem>
     }
 
-    const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map(c => getKeyBoardItem(c))
-    const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map(c => getKeyBoardItem(c))
-    const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map(c => getKeyBoardItem(c))
+    const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((c, key) => getKeyBoardItem(c, key))
+    const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((c, key) => getKeyBoardItem(c, key))
+    const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map((c, key) => getKeyBoardItem(c, key))
 
     return state.word ? (<Container>
         {state.success && <GreenTypography>
@@ -224,7 +232,7 @@ export default function Gaming({ user }) {
             <ThumbUpIcon />
         </GreenTypography>}
         <MyBox>
-            {state.word}
+            {process.env.REACT_APP_TEST_MODE && state.word}
             {rows}
         </MyBox>
         <MyRow>
