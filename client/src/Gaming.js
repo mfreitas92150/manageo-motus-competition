@@ -25,10 +25,10 @@ const Item = styled(Paper)(({ theme }) => ({
 }));
 
 const KeyBoardItem = styled(Button)(() => ({
-    
+
 }));
 
-const MyStack = styled(Stack)(({ }) => ({
+const MyStack = styled(Stack)(() => ({
     marginTop: "10px"
 }))
 
@@ -59,11 +59,13 @@ const MySubdirectoryArrowLeftIcon = styled(SubdirectoryArrowLeftIcon)({
 export default function Gaming({ user }) {
 
     const [state, setState] = useState({
+        id: null,
         word: null,
         currentGuess: [],
         currentLigne: 0,
         guesses: [],
         success: false,
+        timer: null
     });
 
     const numberOfGuess = 6;
@@ -100,32 +102,38 @@ export default function Gaming({ user }) {
     const validWord = (word, guess) => {
         const validWord = word.substring(1).split('')
         let charToFind = word.substring(1).split('')
-        const guessWord = guess.filter((g, index) => index > 0).map(g => g.char)
-    
+        const guessWord = guess.filter((c, index) => index > 0).map(g => g.char)
+
+        const newGuess = guessWord.map((g, index) => {
+            const wChar = validWord[index];
+            let state = 0;
+            if (wChar === g) {
+                state = 2
+                const i = charToFind.indexOf(g);
+                charToFind.splice(i, 1);
+            }
+            return {
+                char: g,
+                state
+            }
+        })
+
         return [
             {
                 char: word.substring(0, 1),
                 state: 2
             },
-            ...guessWord.map((g, index) => {
-                const wChar = validWord[index];
-                let state = 0;
-                if (wChar === g) {
-                    state = 2
-                    var index = charToFind.indexOf(g);
-                    charToFind = charToFind.splice(index, 1);
-                } else if (charToFind.includes(g)) {
-                    state = 1
-                    var index = charToFind.indexOf(g);
-                    charToFind = charToFind.splice(index, 1);
+            ...newGuess.map((g, index) => {
+                if (g.state !== 2 && charToFind.includes(g.char)) {
+                    return {
+                        char: g.char,
+                        state: 1
+                    }
                 }
-                return {
-                    char: g,
-                    state
-                }
+                return g
             })]
     }
-    
+
     const checkWord = () => {
         const guess = [...state.guesses[state.currentLigne]]
         const word = state.word
@@ -133,19 +141,24 @@ export default function Gaming({ user }) {
         const guesses = [...state.guesses]
         guesses[state.currentLigne] = result
         const success = !result.find(c => c.state !== 2);
-        if (success) {
-            fetch("/api/user/rank", {
-                method: "POST",
-                headers: {
-                    'Accept': 'application/json, text/plain, */*',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ...user,
-                    point: numberOfGuess - state.currentLigne
-                })
+
+        fetch("/api/word", {
+            method: "PUT",
+            headers: {
+                'Accept': 'application/json, text/plain, */*',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                word: state.word,
+                current_guess: guess,
+                current_line: success ? state.currentLigne : state.currentLigne + 1,
+                guesses,
+                success,
+                email: user.email,
+                id: state.id
             })
-        }
+        })
+
         setState({
             ...state,
             currentGuess: guess,
@@ -170,37 +183,25 @@ export default function Gaming({ user }) {
     });
 
     useEffect(() => {
-        fetch(`/api/word`)
+        fetch(`/api/word?email=${user.email}`)
             .then((res) => res.json())
             .then((data) => {
-                const word = data.word.toUpperCase();
-                const charWord = [...word]
-                let guesses = [];
-                for (let i = 0; i < word.length; i++) {
-                    guesses.push([{
-                        char: charWord[0],
-                        state: 2
-                    }])
-                }
-                const newState = {
-                    word,
-                    currentGuess: [{
-                        char: charWord[0],
-                        state: 0
-                    }],
-                    currentLigne: 0,
-                    guesses,
-                };
-                setState(newState);
+                setState({
+                    word: data.word,
+                    currentGuess: JSON.parse(data.current_guess),
+                    currentLigne: data.current_line,
+                    guesses: JSON.parse(data.guesses),
+                    success: data.success,
+                    id: data.id,
+                })
             });
-    }, []);
+    }, [user.email]);
     let rows = [];
     if (state.guesses.length) {
         for (let i = 0; i < numberOfGuess; i++) {
             let items = [];
             const guess = i < state.guesses.length ? state.guesses[i] : [];
             for (let j = 0; j < state.word.length; j++) {
-                const char = guess.length > j ? guess[j].word : " "
                 const colorIndex = guess.length > j ? guess[j].state : 0
                 const style = colorIndex === 0 ? {} : {
                     backgroundColor: colorIndex === 1 ? "#FEF83C" : "#388AEA"

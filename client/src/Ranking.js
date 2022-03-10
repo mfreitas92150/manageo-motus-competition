@@ -8,7 +8,6 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import Checkbox from '@mui/material/Checkbox';
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
     [`&.${tableCellClasses.head}`]: {
@@ -40,27 +39,33 @@ export default function Ranking() {
 
     }, [])
     return <Container>
-        <TableContainer component={Paper}>
-            <Table sx={{ minWidth: 700 }} aria-label="customized table">
-                <TableHead>
-                    <TableRow>
-                        <StyledTableCell>Utilisateurs</StyledTableCell>
-                        <StyledTableCell>Points</StyledTableCell>
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {ranking.map((user, key) => (
-                        <StyledTableRow key={key}>
-                            <StyledTableCell component="th" scope="row">
-                                {user.email}
-                            </StyledTableCell>
-                            <StyledTableCell>
-                                {user.rank}
-                            </StyledTableCell>
-                        </StyledTableRow>
-                    ))}
-                </TableBody>
-            </Table>
-        </TableContainer>
+        {ranking?.id ? <>
+            <h2>Championnat {ranking.id} du {ranking.start} au {ranking.end}</h2>
+            <TableContainer component={Paper}>
+                <Table sx={{ minWidth: 700 }} aria-label="customized table">
+                    <TableHead>
+                        <TableRow>
+                            <StyledTableCell>Utilisateurs</StyledTableCell>
+                            <StyledTableCell>Points</StyledTableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {ranking?.users?.map((user, key) => (
+                            <StyledTableRow key={key}>
+                                <StyledTableCell component="th" scope="row">
+                                    {user.email}
+                                </StyledTableCell>
+                                <StyledTableCell>
+                                    {user.point}
+                                </StyledTableCell>
+                            </StyledTableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </> :
+            <h3>Chargement</h3>
+        }
+
     </Container>
 }

@@ -10,8 +10,99 @@ const PORT = process.env.PORT || 3001;
 
 const app = express();
 
+const updateWordDelay = process.env.UPDATE_WORD_DELAY
+const updateRankDelay = process.env.UPDATE_RANK_DELAY
+
 const getRandomInt = (max) => {
     return Math.floor(Math.random() * max);
+}
+
+const getDateWord = () => {
+    const currrentDate = new Date();
+    const result = {
+        lt: currrentDate
+    }
+    if (updateWordDelay) {
+        result.gt = datefns.subMinutes(currrentDate, updateWordDelay)
+    } else {
+        currrentDate.setHours(2)
+        currrentDate.setMinutes(0)
+        currrentDate.setSeconds(0)
+        currrentDate.setMilliseconds(0)
+        result.gt = currrentDate
+    }
+
+    return result
+}
+
+const getDateRanking = () => {
+    const currrentDate = new Date();
+    const result = {
+        lt: currrentDate
+    }
+    if (updateRankDelay) {
+        result.gt = datefns.subMinutes(currrentDate, updateRankDelay)
+        result.until = datefns.addMinutes(currrentDate, updateRankDelay)
+    } else {
+        currrentDate.setHours(2)
+        currrentDate.setMinutes(0)
+        currrentDate.setSeconds(0)
+        currrentDate.setMilliseconds(0)
+        result.gt = datefns.subDays(currrentDate, 15)
+        result.until = datefns.addMinutes(currrentDate, 15)
+    }
+
+    return result
+}
+
+const udpateRank = async (email, point) => {
+
+    const dates = getDateRanking()
+    let ranking = await prisma.cop_ranking.findFirst({
+        where: {
+            create_at: {
+                gte: dates.gt,
+                lt: dates.lt
+            }
+        }
+    })
+
+    if (!ranking) {
+        ranking = await prisma.cop_ranking.create({
+            data: {
+                create_at: dates.lt
+            }
+        })
+    }
+
+    const user = await prisma.cop_user_ranking.findFirst({
+        where: {
+            AND: {
+                ranking_id: ranking.id,
+                email: email,
+            }
+        },
+    })
+
+    if (user) {
+        await prisma.cop_user_ranking.update({
+            where: {
+                id: user.id
+            },
+            data: {
+                point: point + user.point,
+            },
+        })
+    } else {
+        await prisma.cop_user_ranking.create({
+            data: {
+                email: email,
+                ranking_id: ranking.id,
+                point: point
+            }
+        })
+    }
+
 }
 
 app.use(express.json());
@@ -62,34 +153,7 @@ app.put("/api/user", async (req, res) => {
 })
 
 app.post("/api/user/rank", async (req, res) => {
-    console.info(req.body)
-
-    const user = await prisma.cop_ranking.findUnique({
-        where: {
-            email: req.body.email,
-        },
-    })
-    console.info(user)
-    if (user) {
-        console.info("update")
-        await prisma.cop_ranking.update({
-            where: {
-                email: req.body.email,
-            },
-            data: {
-                rank: req.body.point + user.rank,
-            },
-        })
-    } else {
-        console.info("create")
-        await prisma.cop_ranking.create({
-            data: {
-                email: req.body.email,
-                rank: req.body.point
-            }
-        })
-    }
-
+    udpateRank(req.body.email, req.body.point)
 })
 
 app.post("/api/user/guess", async (req, res) => {
@@ -126,87 +190,121 @@ app.delete("/api/user", async (req, res) => {
 });
 
 app.get("/api/ranking", async (req, res) => {
-    const ranking = await prisma.cop_ranking.findMany({
-        orderBy: [
-            {
-                rank: 'desc',
+    const dates = getDateRanking()
+    let ranking = await prisma.cop_ranking.findFirst({
+        where: {
+            create_at: {
+                gte: dates.gt,
+                lt: dates.lt
             }
-        ]
+        }
     })
-    res.send(ranking)
+    if (!ranking) {
+        ranking = await prisma.cop_ranking.create({
+            data: {
+                create_at: dates.lt
+            }
+        })
+    }
+    const users = await prisma.cop_user_ranking.findMany({
+        where: {
+            ranking_id: ranking.id
+        },
+        orderBy: {
+            point: 'desc',
+        }
+    })
+    res.send({
+        ...ranking,
+        until_at: ranking.until,
+        start: datefns.format(ranking.create_at, 'dd/MM/yyyy'),
+        end: datefns.format(dates.until, 'dd/MM/yyyy'),
+        users
+    })
 })
 
 app.get("/api/word", async (req, res) => {
-    if (process.env.TEST_MODE) {
+    if (process.env.TEST_MODE === "true") {
         res.send({ word: "TESTER" })
         return;
     }
-    const currrentDate = new Date();
-    const currentDateMinus5 = datefns.subMinutes(currrentDate, 5)
+    const dates = getDateWord()
     const wordFromDb = await prisma.cop_word.findFirst({
         where: {
-            affected_at: {
-                gte: currentDateMinus5,
-                lt: currrentDate
+            AND: {
+                affected_at: {
+                    gte: dates.gt,
+                    lt: dates.lt
+                },
+                email: req.query.email
             }
         }
     })
     if (wordFromDb) {
-        res.send({ word: wordFromDb.word })
+        res.send(wordFromDb)
     } else {
         const index = getRandomInt(mots.length - 1);
         const word = mots[index].toUpperCase();
-        await prisma.cop_word.create({
-            data: {
-                word,
-                affected_at: currrentDate
-            }
-        })
-        res.send({ word })
-    }
+        const guesses = [];
+        for (let i = 0; i < 6; i++) {
+            guesses.push([{
+                char: word[0],
+                state: 2
+            }])
+        }
+        const result = {
+            word,
+            affected_at: dates.lt,
+            email: req.query.email,
+            guesses: JSON.stringify(guesses),
+            current_guess: JSON.stringify([{
+                char: word[0],
+                state: 0
+            }]),
+            current_line: 0,
+            success: false,
+        };
 
+        res.send(await prisma.cop_word.create({
+            data: result
+        }))
+    }
 });
+
+app.put("/api/word", async (req, res) => {
+    await prisma.cop_word.update({
+        where: {
+            id: req.body.id,
+        },
+        data: {
+            guesses: JSON.stringify(req.body.guesses),
+            success: req.body.success,
+            current_line: req.body.current_line,
+            current_guess: JSON.stringify(req.body.current_guess)
+        },
+    })
+    if (req.body.success) {
+        udpateRank(req.body.email, 6 - req.body.current_line)
+    }
+})
 
 app.get('*', (req, res) => {
     res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
 });
 
-const validWord = (word, guess) => {
-    const validWord = word.substring(1).split('')
-    let charToFind = word.substring(1).split('')
-    const guessWord = guess.filter((g, index) => index > 0).map(g => g.char)
-
-    return [
-        {
-            char: word.substring(0, 1),
-            state: 2
-        },
-        ...guessWord.map((g, index) => {
-            const wChar = validWord[index];
-            let state = 0;
-            if (wChar === g) {
-                state = 2
-                var index = charToFind.indexOf(g);
-                charToFind = charToFind.splice(index, 1);
-            } else if (charToFind.includes(g)) {
-                state = 1
-                var index = charToFind.indexOf(g);
-                charToFind = charToFind.splice(index, 1);
-            }
-            return {
-                char: g,
-                state
-            }
-        })]
-}
 
 app.listen(PORT, () => {
     console.log(`Server listening on ${PORT}`);
-
-    if (process.env.TEST_MODE) {
+    if (process.env.TEST_MODE === "true") {
         console.info("Mode test")
     }
-    
+    if (updateWordDelay) {
+        console.info(`updateWordDelay: ${updateWordDelay}`)
+    }
+
+    udpateRank('test1@test.fr', 12)
+    udpateRank('test2@test.fr', 8)
+    udpateRank('test3@test.fr', 1)
 });
 
 

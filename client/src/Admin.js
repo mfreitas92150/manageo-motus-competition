@@ -5,7 +5,6 @@ import Tab from '@mui/material/Tab';
 import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 
-import AdminWord from './AdminWord'
 import AdminUser from './AdminUser'
 
 function TabPanel(props) {

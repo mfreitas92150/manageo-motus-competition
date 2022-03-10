@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -11,26 +8,39 @@ datasource db {
 }
 
 model cop_user {
-  email String @id
-  role String @default("USER")
-  validate Boolean @default(false)
+  email    String   @id(map: "user_pk")
+  role     String?  @default("USER")
+  validate Boolean? @default(false)
 }
 
 model cop_word {
-  word String @id
-  affected_at DateTime
+  word          String
+  affected_at   DateTime? @db.Timestamp(6)
+  email         String?
+  id            Int       @id(map: "cop_word_pk") @default(autoincrement())
+  guesses       String?
+  success       Boolean?  @default(false)
+  current_line  Int?      @default(0)
+  current_guess String?
+}
+
+model cop_user_ranking {
+  id         Int     @id(map: "cop_user_ranking_pk") @unique(map: "cop_user_ranking_id_uindex") @default(autoincrement())
+  ranking_id Int?
+  email      String?
+  point      Int?
 }
 
 model cop_ranking {
-  email String @id
-  rank Int
+  id        Int       @id(map: "cop_ranking_pk") @default(autoincrement())
+  create_at DateTime? @db.Timestamp(6)
 }
 
 model cop_user_guess {
-  id Int @id @default(autoincrement())
-  create_at DateTime   @default(now())
-  email String
-  word String
-  guess_try Int
-  guess String
+  id        Int      @id(map: "cop_user_guess_pk") @default(autoincrement())
+  create_at DateTime @db.Timestamp(6)
+  email     String?  @db.VarChar
+  word      String   @db.VarChar
+  guess_try Int?
+  guess     String?  @db.VarChar
 }
