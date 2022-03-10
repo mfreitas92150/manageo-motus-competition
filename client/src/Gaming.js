@@ -65,7 +65,8 @@ export default function Gaming({ user }) {
         currentLigne: 0,
         guesses: [],
         success: false,
-        timer: null
+        goodChars: [],
+        inButNoPlaceChars: [],
     });
 
     const numberOfGuess = 6;
@@ -142,7 +143,7 @@ export default function Gaming({ user }) {
         guesses[state.currentLigne] = result
         const success = !result.find(c => c.state !== 2);
 
-        fetch("/api/word", {
+        fetch("/api/user/word", {
             method: "PUT",
             headers: {
                 'Accept': 'application/json, text/plain, */*',
@@ -159,12 +160,17 @@ export default function Gaming({ user }) {
             })
         })
 
+        const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
+        const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
+
         setState({
             ...state,
             currentGuess: guess,
             guesses,
             currentLigne: success ? state.currentLigne : state.currentLigne + 1,
-            success
+            success,
+            goodChars: goods,
+            inButNoPlaceChars: almosts,
         })
     }
 
@@ -183,16 +189,21 @@ export default function Gaming({ user }) {
     });
 
     useEffect(() => {
-        fetch(`/api/word?email=${user.email}`)
+        fetch(`/api/user/word?email=${user.email}`)
             .then((res) => res.json())
             .then((data) => {
+                const guesses = JSON.parse(data.guesses);
+                const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
+                const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
                 setState({
                     word: data.word,
                     currentGuess: JSON.parse(data.current_guess),
                     currentLigne: data.current_line,
-                    guesses: JSON.parse(data.guesses),
+                    guesses: guesses,
                     success: data.success,
                     id: data.id,
+                    goodChars: goods,
+                    inButNoPlaceChars: almosts,
                 })
             });
     }, [user.email]);
@@ -219,7 +230,17 @@ export default function Gaming({ user }) {
         if (c === 'ENTER') {
             return <KeyBoardItem size='small' key={key} variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
         }
-        return <KeyBoardItem size='small' key={key} variant='outlined' onClick={() => addChar(c)}>{c}</KeyBoardItem>
+        let style = {}
+        if (state.goodChars.includes(c)) {
+            style = {
+                backgroundColor: "#388AEA"
+            }
+        } else if (state.inButNoPlaceChars.includes(c)) {
+            style = {
+                backgroundColor: "#FEF83C"
+            }
+        }
+        return <KeyBoardItem size='small' key={key} variant='outlined' style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
     }
 
     const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((c, key) => getKeyBoardItem(c, key))

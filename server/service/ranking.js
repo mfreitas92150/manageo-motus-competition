@@ -1,24 +1,10 @@
-const express = require("express");
-const path = require('path');
-const prismaClient = require('@prisma/client');
-const mots = require('./mots.js')
+
 const datefns = require("date-fns");
-
-const userRouter = require('./router/user')
-const rankingRouter = require('./router/ranking')
-
-const rankingService = require('./service/ranking')
+const prismaClient = require('@prisma/client');
 
 const prisma = new prismaClient.PrismaClient()
 
-const PORT = process.env.PORT || 3001;
-
-const app = express();
-
-const updateWordDelay = process.env.UPDATE_WORD_DELAY
 const updateRankDelay = process.env.UPDATE_RANK_DELAY
-
-
 
 const getDateRanking = () => {
     const currrentDate = new Date();
@@ -40,25 +26,33 @@ const getDateRanking = () => {
     return result
 }
 
-const udpateRank = async (email, point) => {
-
-    const dates = getDateRanking()
+const getRanking = async (dates) => {
+    const currentDates = dates || getDateRanking()
     let ranking = await prisma.cop_ranking.findFirst({
         where: {
             create_at: {
-                gte: dates.gt,
-                lt: dates.lt
+                gte: currentDates.gt,
+                lte: currentDates.lt
             }
         }
     })
-
     if (!ranking) {
         ranking = await prisma.cop_ranking.create({
             data: {
-                create_at: dates.lt
+                create_at: currentDates.lt
             }
         })
     }
+    return ranking
+}
+
+module.exports.getDateRanking = getDateRanking
+module.exports.getRanking = getRanking
+
+module.exports.udpateRank = async (email, point) => {
+
+    const dates = getDateRanking()
+    const ranking = getRanking()
 
     const user = await prisma.cop_user_ranking.findFirst({
         where: {
@@ -89,32 +83,3 @@ const udpateRank = async (email, point) => {
     }
 
 }
-
-app.use(express.json());
-
-app.use(express.static(path.resolve(__dirname, '../client/build')));
-
-app.use("/api/user", userRouter);
-app.use("/api/ranking", rankingRouter);
-
-app.post("/api/user/rank", async (req, res) => {
-    udpateRank(req.body.email, req.body.point)
-})
-
-
-app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../client/build', 'index.html'));
-});
-
-
-app.listen(PORT, async () => {
-    console.log(`Server listening on ${PORT}`);
-    if (process.env.TEST_MODE === "true") {
-        console.info("Mode test")
-    }
-    if (updateWordDelay) {
-        console.info(`updateWordDelay: ${updateWordDelay}`)
-    }
-});
-
-
