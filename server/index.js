@@ -235,7 +235,7 @@ app.get("/api/word", async (req, res) => {
             AND: {
                 affected_at: {
                     gte: dates.gt,
-                    lt: dates.lt
+                    lte: dates.lt
                 },
                 email: req.query.email
             }
