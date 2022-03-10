@@ -191,11 +191,12 @@ app.delete("/api/user", async (req, res) => {
 
 app.get("/api/ranking", async (req, res) => {
     const dates = getDateRanking()
+    console.info(dates)
     let ranking = await prisma.cop_ranking.findFirst({
         where: {
             create_at: {
                 gte: dates.gt,
-                lt: dates.lt
+                lte: dates.lt
             }
         }
     })
@@ -293,7 +294,7 @@ app.get('*', (req, res) => {
 });
 
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Server listening on ${PORT}`);
     if (process.env.TEST_MODE === "true") {
         console.info("Mode test")
@@ -301,10 +302,6 @@ app.listen(PORT, () => {
     if (updateWordDelay) {
         console.info(`updateWordDelay: ${updateWordDelay}`)
     }
-
-    udpateRank('test1@test.fr', 12)
-    udpateRank('test2@test.fr', 8)
-    udpateRank('test3@test.fr', 1)
 });
 
 
