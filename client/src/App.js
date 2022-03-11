@@ -26,6 +26,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import Admin from './Admin'
 import Ranking from './Ranking'
 import Gaming from './Gaming'
+import Landing from './Landing'
 
 
 const drawerWidth = 240;
@@ -102,7 +103,7 @@ export default function MiniDrawer() {
     open: false,
     role: null,
     validate: false,
-    page: 'gaming'
+    page: null
   });
   const { loginWithRedirect, logout, isAuthenticated, user } = useAuth0();
 
@@ -114,7 +115,7 @@ export default function MiniDrawer() {
           open: false,
           role: data.role,
           validate: data.validate,
-          page: 'gaming'
+          page: null
         }));
     }
   }, [isAuthenticated, user])
@@ -221,6 +222,7 @@ export default function MiniDrawer() {
         {isAuthenticated && !state.validate && <Typography paragraph>
           Vous n'êtes pas validé par le maitre du jeux.
         </Typography>}
+        {state.validate && !state.page && <Landing />}
         {state.validate && state.page === 'gaming' && <Gaming user={user}/>}
         {state.validate && state.page === 'ranking' && <Ranking />}
         {state.role === 'ADMIN' && state.page === 'admin' && <Admin />}
