@@ -13,7 +13,7 @@ import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft
 import useEventListener from '@use-it/event-listener'
 import { Container } from '@mui/material';
 
-import Button from '@mui/material/Button';
+import { format, differenceInMinutes } from 'date-fns'
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -74,7 +74,12 @@ export default function Gaming({ user }) {
         goodChars: [],
         inButNoPlaceChars: [],
         badChars: [],
+        startDate: null,
     });
+
+    const [startDate, setStartDate] = useState(null)
+    const [currentDate, setCurrentDate] = useState(null)
+    const [timer, setTimer] = useState(null)
 
     const numberOfGuess = 6;
 
@@ -181,6 +186,11 @@ export default function Gaming({ user }) {
             inButNoPlaceChars: almosts,
             badChars: bads,
         })
+        
+        if(success || state.currentLigne >= 5) {
+            clearInterval(timer)
+            setTimer(null)
+        }
     }
 
     useEventListener('keydown', (event) => {
@@ -216,19 +226,39 @@ export default function Gaming({ user }) {
                     inButNoPlaceChars: almosts,
                     badChars: bads,
                 })
+                setStartDate(new Date())
             });
     }, [user.email]);
-    let rows = [];
+
+    useEffect(() => {
+        if (!timer && startDate && !state.success && state.currentLigne !== 6) {
+            const t = setInterval(() => {
+                setCurrentDate(new Date())
+            }, 1000)
+
+            setTimer(t)
+        }
+
+    }, [startDate, state, timer])
+
+    const rows = [];
     if (state.guesses.length) {
         for (let i = 0; i < numberOfGuess; i++) {
             let items = [];
             const guess = i < state.guesses.length ? state.guesses[i] : [];
             for (let j = 0; j < state.word.length; j++) {
                 const colorIndex = guess.length > j ? guess[j].state : 0
-                const style = colorIndex === 0 ? {} : {
-                    backgroundColor: colorIndex === 1 ? "#FEF83C" : "#388AEA"
+                let backgroundColor = "#F6F7FA";
+                if (colorIndex === 1){
+                    backgroundColor = "#FEF83C";
+                } else if (colorIndex === 2){
+                    backgroundColor = "#388AEA";
+                } else if(i > state.currentLigne) {
+                    backgroundColor = "#DFDFDF";
                 }
-                items.push(<Item key={j} style={style}>{guess.length > j ? guess[j].char : " "}</Item>)
+                items.push(<Item key={j} style={{
+                    backgroundColor: backgroundColor
+                }}>{guess.length > j ? guess[j].char : " "}</Item>)
             }
             rows.push(<MyStack direction="row" spacing={1} key={i}>{items}</MyStack>)
         }
@@ -264,6 +294,19 @@ export default function Gaming({ user }) {
     const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((c, key) => getKeyBoardItem(c, key))
     const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map((c, key) => getKeyBoardItem(c, key))
 
+
+    const displayTimer = () => {
+        const display = format(new Date(currentDate - startDate), 'mm:ss')
+        const diff = differenceInMinutes(currentDate, startDate)
+        const message1 = diff >= 5 && diff < 10 && <span style={{color: '#D1C06C'}}>Courage tu peux le faire</span>
+        const message2 = diff >= 10 && <span style={{color: '#DE9239'}}>Allez là ! accélère</span>
+        return <Typography>
+            Temps dans le jeux : {display}<br/>
+            {message1}
+            {message2}
+        </Typography>
+    }
+
     return state.word ? (<Container>
         {state.success && <GreenTypography>
             <ThumbUpIcon />
@@ -275,7 +318,7 @@ export default function Gaming({ user }) {
             {`Echec. Vous marqez 0 point. Vous êtes trop mauvais. Revenez demain.`}
             <ThumbDownIcon />
         </RedTypography>}
-        
+        {currentDate && displayTimer()}
         <MyBox>
             {process.env.REACT_APP_TEST_MODE && state.word}
             {rows}
