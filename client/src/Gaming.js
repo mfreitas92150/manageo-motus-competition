@@ -315,7 +315,8 @@ export default function Gaming({ user }) {
         </GreenTypography>}
         {state.currentLigne === 6 && !state.success && <RedTypography>
             <ThumbDownIcon />
-            {`Echec. Vous marqez 0 point. Vous êtes trop mauvais. Revenez demain.`}
+            Echec. Vous marqez 0 point. Le mot était {state.word}. <br/>
+            Vous êtes trop mauvais. Revenez demain.
             <ThumbDownIcon />
         </RedTypography>}
         {currentDate && displayTimer()}
