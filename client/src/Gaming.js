@@ -6,6 +6,7 @@ import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
 
 import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
 import BackspaceIcon from '@mui/icons-material/Backspace';
 import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
 
@@ -24,8 +25,9 @@ const Item = styled(Paper)(({ theme }) => ({
     fontWeight: 'bold',
 }));
 
-const KeyBoardItem = styled(Button)(() => ({
-
+const KeyBoardItem = styled(Paper)(() => ({
+    fontWeight: 'bold',
+    padding: '10px',
 }));
 
 const MyStack = styled(Stack)(() => ({
@@ -34,6 +36,10 @@ const MyStack = styled(Stack)(() => ({
 
 const GreenTypography = styled(Typography)({
     color: '#71CC51'
+})
+
+const RedTypography = styled(Typography)({
+    color: '#B00403'
 })
 
 
@@ -64,9 +70,10 @@ export default function Gaming({ user }) {
         currentGuess: [],
         currentLigne: 0,
         guesses: [],
-        success: false,
+        success: null,
         goodChars: [],
         inButNoPlaceChars: [],
+        badChars: [],
     });
 
     const numberOfGuess = 6;
@@ -162,6 +169,7 @@ export default function Gaming({ user }) {
 
         const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
         const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
+        const bads = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 0).map(g => g.char)
 
         setState({
             ...state,
@@ -171,6 +179,7 @@ export default function Gaming({ user }) {
             success,
             goodChars: goods,
             inButNoPlaceChars: almosts,
+            badChars: bads,
         })
     }
 
@@ -195,6 +204,7 @@ export default function Gaming({ user }) {
                 const guesses = JSON.parse(data.guesses);
                 const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
                 const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
+                const bads = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 0).map(g => g.char)
                 setState({
                     word: data.word,
                     currentGuess: JSON.parse(data.current_guess),
@@ -204,6 +214,7 @@ export default function Gaming({ user }) {
                     id: data.id,
                     goodChars: goods,
                     inButNoPlaceChars: almosts,
+                    badChars: bads,
                 })
             });
     }, [user.email]);
@@ -233,14 +244,20 @@ export default function Gaming({ user }) {
         let style = {}
         if (state.goodChars.includes(c)) {
             style = {
-                backgroundColor: "#388AEA"
+                backgroundColor: "#388AEA",
+                color: '#FFF'
             }
         } else if (state.inButNoPlaceChars.includes(c)) {
             style = {
                 backgroundColor: "#FEF83C"
             }
+        } else if (state.badChars.includes(c)) {
+            style = {
+                backgroundColor: "#D9CFD4",
+                color: '#FFF'
+            }
         }
-        return <KeyBoardItem size='small' key={key} variant='outlined' style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
+        return <KeyBoardItem key={key} style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
     }
 
     const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((c, key) => getKeyBoardItem(c, key))
@@ -253,6 +270,12 @@ export default function Gaming({ user }) {
             {`Réussi. Vous gagnez ${numberOfGuess - state.currentLigne} points`}
             <ThumbUpIcon />
         </GreenTypography>}
+        {state.currentLigne === 6 && !state.success && <RedTypography>
+            <ThumbDownIcon />
+            {`Echec. Vous marqez 0 point. Vous êtes trop mauvais. Revenez demain.`}
+            <ThumbDownIcon />
+        </RedTypography>}
+        
         <MyBox>
             {process.env.REACT_APP_TEST_MODE && state.word}
             {rows}

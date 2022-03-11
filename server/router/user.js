@@ -7,6 +7,8 @@ const mots = require('../mots.js')
 const prisma = new prismaClient.PrismaClient()
 const router = express.Router()
 
+const rankingService = require('../service/ranking')
+
 const updateWordDelay = process.env.UPDATE_WORD_DELAY
 
 const getRandomInt = (max) => {
@@ -139,7 +141,7 @@ router.put("/word", async (req, res) => {
         },
     })
     if (req.body.success) {
-        udpateRank(req.body.email, 6 - req.body.current_line)
+        rankingService.udpateRank(req.body.email, 6 - req.body.current_line)
     }
 })
 

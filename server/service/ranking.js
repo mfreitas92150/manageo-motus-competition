@@ -20,7 +20,7 @@ const getDateRanking = () => {
         currrentDate.setSeconds(0)
         currrentDate.setMilliseconds(0)
         result.gt = datefns.subDays(currrentDate, 15)
-        result.until = datefns.addMinutes(currrentDate, 15)
+        result.until = datefns.addDays(currrentDate, 15)
     }
 
     return result
