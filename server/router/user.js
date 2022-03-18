@@ -86,6 +86,36 @@ router.delete("/", async (req, res) => {
 
 router.get("/word", async (req, res) => {
     const dates = getDateWord()
+    const index = getRandomInt(mots.availables.length - 1);
+    const word = mots.availables[index].toUpperCase();
+
+    if (process.env.TEST_MODE === "true") {
+        const guesses = [];
+        for (let i = 0; i < 6; i++) {
+            guesses.push([{
+                char: word[0],
+                state: 2
+            }])
+        }
+        const result = {
+            word,
+            affected_at: dates.lt,
+            email: req.query.email,
+            guesses: JSON.stringify(guesses),
+            current_guess: JSON.stringify([{
+                char: word[0],
+                state: 0
+            }]),
+            current_line: 0,
+            success: false,
+        };
+
+        res.send(await prisma.cop_word.create({
+            data: result
+        }))
+        return
+    }
+    
     const wordFromDb = await prisma.cop_word.findFirst({
         where: {
             AND: {
@@ -100,8 +130,6 @@ router.get("/word", async (req, res) => {
     if (wordFromDb) {
         res.send(wordFromDb)
     } else {
-        const index = getRandomInt(mots.length - 1);
-        const word = mots[index].toUpperCase();
         const guesses = [];
         for (let i = 0; i < 6; i++) {
             guesses.push([{
