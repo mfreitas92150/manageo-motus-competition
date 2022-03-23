@@ -3,11 +3,11 @@ const prismaClient = require('@prisma/client');
 const datefns = require("date-fns");
 
 const mots = require('../mots.js')
+const userService = require('../service/user')
+const rankingService = require('../service/ranking')
 
 const prisma = new prismaClient.PrismaClient()
 const router = express.Router()
-
-const rankingService = require('../service/ranking')
 
 const updateWordDelay = process.env.UPDATE_WORD_DELAY
 
@@ -100,21 +100,33 @@ router.get("/championship", async (req, res) => {
             }
         }
     })
-    if (!championship) {
-        res.send({})
-        return
-    }
-    const champUser = await prisma.cop_championship_user.findFirst({
+    const nextChampionshipDb = await prisma.cop_championship.findFirst({
         where: {
             AND: {
-                championship_id: championship.id,
-                user_email: req.query.email
-            },
+                begin: {
+                    gte: new Date()
+                }
+            }
         }
     })
+    const nextChampionship = nextChampionshipDb && {
+        id: nextChampionshipDb.id,
+        begin: nextChampionshipDb.begin,
+        name: nextChampionshipDb.name,
+        participate: await userService.findUserChampionship(nextChampionshipDb.id, req.query.email) !== null
+    }
+
+    if (!championship) {
+        res.send({
+            nextChampionship
+        })
+        return
+    }
+    const champUser = await userService.findUserChampionship(championship.id, req.query.email)
     res.send({
         ...championship,
-        participate: champUser !== null
+        participate: champUser !== null,
+        nextChampionship
     })
 })
 
