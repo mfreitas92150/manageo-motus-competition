@@ -62,11 +62,12 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-    await prisma.cop_user.create({ data: req.body })
+    const user = await prisma.cop_user.create({ data: req.body })
+    res.send(`${user.id}`)
 });
 
 router.put("/", async (req, res) => {
-    await prisma.cop_user.update({
+    const user = await prisma.cop_user.update({
         where: {
             email: req.body.email,
         },
@@ -74,6 +75,7 @@ router.put("/", async (req, res) => {
             validate: req.body.validate,
         },
     })
+    res.send(`${user.id}`)
 })
 
 router.delete("/", async (req, res) => {
@@ -82,40 +84,46 @@ router.delete("/", async (req, res) => {
             email: req.query.email,
         }
     })
+    res.send("true")
 });
+
+router.get("/championship", async (req, res) => {
+    const championship = await prisma.cop_championship.findFirst({
+        where: {
+            AND: {
+                begin: {
+                    lte: new Date()
+                },
+                end: {
+                    gte: new Date()
+                }
+            }
+        }
+    })
+    if (!championship) {
+        res.send({})
+        return
+    }
+    const champUser = await prisma.cop_championship_user.findFirst({
+        where: {
+            AND: {
+                championship_id: championship.id,
+                user_email: req.query.email
+            },
+        }
+    })
+    res.send({
+        ...championship,
+        participate: champUser !== null
+    })
+})
 
 router.get("/word", async (req, res) => {
     const dates = getDateWord()
     const index = getRandomInt(mots.availables.length - 1);
+
     const word = mots.availables[index].toUpperCase();
 
-    if (process.env.TEST_MODE === "true") {
-        const guesses = [];
-        for (let i = 0; i < 6; i++) {
-            guesses.push([{
-                char: word[0],
-                state: 2
-            }])
-        }
-        const result = {
-            word,
-            affected_at: dates.lt,
-            email: req.query.email,
-            guesses: JSON.stringify(guesses),
-            current_guess: JSON.stringify([{
-                char: word[0],
-                state: 0
-            }]),
-            current_line: 0,
-            success: false,
-        };
-
-        res.send(await prisma.cop_word.create({
-            data: result
-        }))
-        return
-    }
-    
     const wordFromDb = await prisma.cop_word.findFirst({
         where: {
             AND: {

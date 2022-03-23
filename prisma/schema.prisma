@@ -36,11 +36,15 @@ model cop_ranking {
   create_at DateTime? @db.Timestamp(6)
 }
 
-model cop_user_guess {
-  id        Int      @id(map: "cop_user_guess_pk") @default(autoincrement())
-  create_at DateTime @db.Timestamp(6)
-  email     String?  @db.VarChar
-  word      String   @db.VarChar
-  guess_try Int?
-  guess     String?  @db.VarChar
+model cop_championship {
+  id    Int       @id(map: "cop_championship_pk") @default(autoincrement())
+  name  String
+  begin DateTime? @db.Timestamp(6)
+  end   DateTime? @db.Timestamp(6)
+}
+
+model cop_championship_user {
+  id              Int    @id(map: "cop_championship_user_pk") @unique(map: "cop_championship_user_id_uindex") @default(autoincrement())
+  championship_id Int
+  user_email      String
 }

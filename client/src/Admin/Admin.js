@@ -6,6 +6,7 @@ import PropTypes from 'prop-types';
 import Box from '@mui/material/Box';
 
 import AdminUser from './AdminUser'
+import Championship from './Championship/Championship'
 
 function TabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -49,10 +50,14 @@ export default function Admin() {
     <Box sx={{ width: '100%' }}>
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs value={value} onChange={handleChange} aria-label="basic tabs example">
-          <Tab label="Utilisateurs" {...a11yProps(0)} />
+          <Tab label="Championnat" {...a11yProps(0)} />
+          <Tab label="Utilisateurs" {...a11yProps(1)} />
         </Tabs>
       </Box>
       <TabPanel value={value} index={0}>
+        <Championship />
+      </TabPanel>
+      <TabPanel value={value} index={1}>
         <AdminUser />
       </TabPanel>
     </Box>

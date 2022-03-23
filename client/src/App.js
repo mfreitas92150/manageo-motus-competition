@@ -23,9 +23,9 @@ import SettingsIcon from '@mui/icons-material/Settings';
 
 import { useAuth0 } from "@auth0/auth0-react";
 
-import Admin from './Admin'
+import Admin from './Admin/Admin'
+import GamingHome from './Gaming/GamingHome'
 import Ranking from './Ranking'
-import Gaming from './Gaming'
 import Landing from './Landing'
 
 
@@ -223,7 +223,7 @@ export default function MiniDrawer() {
           Vous n'êtes pas validé par le maitre du jeux.
         </Typography>}
         {state.validate && !state.page && <Landing />}
-        {state.validate && state.page === 'gaming' && <Gaming user={user}/>}
+        {state.validate && state.page === 'gaming' && <GamingHome user={user}/>}
         {state.validate && state.page === 'ranking' && <Ranking />}
         {state.role === 'ADMIN' && state.page === 'admin' && <Admin />}
       </Box>
