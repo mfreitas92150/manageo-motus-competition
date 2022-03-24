@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { Button, Container, Stack, textFieldClasses, Typography } from '@mui/material';
 import { format } from 'date-fns'
 
+import Gaming from './Gaming'
+
 export default function GamingHome({ user }) {
     const [championship, setChampionship] = useState({})
     const [participate, setParticipate] = useState(textFieldClasses)
@@ -43,6 +45,7 @@ export default function GamingHome({ user }) {
                 </Typography>
             }
         </Stack>
+        {championship.participate && <Gaming user={user}/>}
     </Container>
 
 }

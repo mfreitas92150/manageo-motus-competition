@@ -1,7 +1,56 @@
 import React, { useEffect, useState } from 'react';
 
+import { styled } from '@mui/material/styles';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Stack from '@mui/material/Stack';
 import { format, differenceInSeconds } from 'date-fns'
 import useEventListener from '@use-it/event-listener'
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import ThumbDownIcon from '@mui/icons-material/ThumbDown';
+import BackspaceIcon from '@mui/icons-material/Backspace';
+import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
+import { Typography } from '@mui/material';
+
+const Item = styled(Paper)(({ theme }) => ({
+    backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
+    ...theme.typography.body2,
+    padding: theme.spacing(1),
+    textAlign: 'center',
+    width: '50px',
+    color: theme.palette.text.secondary,
+    fontWeight: 'bold',
+}));
+
+
+const MyStack = styled(Stack)(() => ({
+    marginTop: "10px"
+}))
+
+const MyBox = styled(Box)({
+    margin: '20px 20px'
+})
+
+const MyRow = styled(Box)({
+    margin: '5px 20px'
+})
+
+const KeyBoardItem = styled(Paper)({
+    fontWeight: 'bold',
+    padding: '10px',
+});
+
+const MyBackspaceIcon = styled(BackspaceIcon)({
+    width: '15px',
+    height: '15px'
+})
+
+const MySubdirectoryArrowLeftIcon = styled(SubdirectoryArrowLeftIcon)({
+    width: '15px',
+    height: '15px'
+})
+
+const numberOfGuess = 6;
 
 export default function Gaming({ user }) {
 
@@ -13,9 +62,14 @@ export default function Gaming({ user }) {
 
     const [intervalId, setIntervalId] = useState(null)
 
+    const [badWord, setBadWord] = useState(false)
+
     const [state, setState] = useState({
         currentLine: 0,
-        guesses: []
+        guesses: [],
+        goodChars: [],
+        inButNoPlaceChars: [],
+        badChars: [],
     });
 
 
@@ -39,6 +93,7 @@ export default function Gaming({ user }) {
                     inButNoPlaceChars: almosts,
                     badChars: bads,
                 })
+
                 if (!data.success && data.current_line < 6) {
                     const timer = setInterval(() => {
                         setCurrentTime(new Date())
@@ -185,18 +240,90 @@ export default function Gaming({ user }) {
         }
         if (event.key === "Backspace" && guess.length > 1) {
             removeChar()
+            setBadWord(false)
         } else if (event.key === "Enter" && guess.length === state.word.length) {
-            checkWord()
+            fetch(`/api/user/valide?word=${guess.map(c => c.char).join('')}`)
+                .then(data => {
+                    if (data === "true") {
+                        checkWord()
+                    } else {
+                        setBadWord(true)
+                    }
+                })
+
         } else if (currentChar && currentChar.match(/[A-Z]/g) && guess.length < state.word.length) {
             addChar(currentChar)
         }
     });
 
+    const rows = [];
+    if (state.guesses.length) {
+        for (let i = 0; i < numberOfGuess; i++) {
+            let items = [];
+            const guess = i < state.guesses.length ? state.guesses[i] : [];
+            for (let j = 0; j < state.word.length; j++) {
+                const colorIndex = guess.length > j ? guess[j].state : 0
+                let backgroundColor = "#F6F7FA";
+                if (colorIndex === 1) {
+                    backgroundColor = "#FEF83C";
+                } else if (colorIndex === 2) {
+                    backgroundColor = "#388AEA";
+                } else if (i > state.currentLine) {
+                    backgroundColor = "#DFDFDF";
+                }
+                items.push(<Item key={j} style={{
+                    backgroundColor: backgroundColor
+                }}>{guess.length > j ? guess[j].char : " "}</Item>)
+            }
+            rows.push(<MyStack direction="row" spacing={1} key={i}>{items}</MyStack>)
+        }
+    }
+    const getKeyBoardItem = (c, key) => {
+        if (c === 'DEL') {
+            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={removeChar}><MyBackspaceIcon /></KeyBoardItem>
+        }
+        if (c === 'ENTER') {
+            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
+        }
+        let style = {}
+        if (state.goodChars.includes(c)) {
+            style = {
+                backgroundColor: "#388AEA",
+                color: '#FFF'
+            }
+        } else if (state.inButNoPlaceChars.includes(c)) {
+            style = {
+                backgroundColor: "#FEF83C"
+            }
+        } else if (state.badChars.includes(c)) {
+            style = {
+                backgroundColor: "#D9CFD4",
+                color: '#FFF'
+            }
+        }
+        return <KeyBoardItem key={key} style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
+    }
+
+    const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((c, key) => getKeyBoardItem(c, key))
+    const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((c, key) => getKeyBoardItem(c, key))
+    const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map((c, key) => getKeyBoardItem(c, key))
+
     return <div>
-        <h2>Jeux {displayTime}</h2>
-        <p>mot: {state.word}</p>
-        <p>diff: {differenceInSeconds(lineCountCurrent, lineCountStart)}</p>
-        <p>currentLine: {state.currentLine}</p>
-        <div>{state.guesses.map((guess, key) => <p key={key}>{guess.map(c => `${c.char}:${c.state} `)}<br /></p>)}</div>
+        <h2>Jeux {displayTime}</h2> 
+        {badWord && <Typography>Mot inconnu</Typography>}
+        {process.env.REACT_APP_TEST_MODE === "true" && <p>mot: {state.word}</p>}
+        {process.env.REACT_APP_TEST_MODE === "true" && <p>diff: {differenceInSeconds(lineCountCurrent, lineCountStart)}</p>}
+        {process.env.REACT_APP_TEST_MODE === "true" && <p>currentLine: {state.currentLine}</p>}
+        {process.env.REACT_APP_TEST_MODE === "true" && <div>{state.guesses.map((guess, key) => <p key={key}>{guess.map(c => `${c.char}:${c.state} `)}<br /></p>)}</div>}
+        {rows}
+        <MyRow>
+            <Stack direction="row" spacing={1}>{keyboardRow1}</Stack>
+        </MyRow>
+        <MyRow>
+            <Stack direction="row" spacing={1}>{keyboardRow2}</Stack>
+        </MyRow>
+        <MyRow>
+            <Stack direction="row" spacing={1}>{keyboardRow3}</Stack>
+        </MyRow>
     </div>
 }

@@ -193,4 +193,8 @@ router.put("/word", async (req, res) => {
     }
 })
 
+router.get("/valid", (req, res) => {
+    res.send(`${mots.validates.includes(res.query.word)}`)
+})
+
 module.exports = router;
