@@ -21,10 +21,6 @@ const MyStack = styled(Stack)(() => ({
     margin: '50px 0'
 }))
 
-const NameBox = styled(Box)(() => ({
-    width: '30em'
-}))
-
 export default function UserChampionship({ championship, handleClose }) {
     const [users, setUsers] = useState([]);
 
@@ -32,7 +28,7 @@ export default function UserChampionship({ championship, handleClose }) {
         fetch(`/api/ranking/championships/user?id=${championship.id}`)
             .then((res) => res.json())
             .then((data) => setUsers(data));
-    }, [])
+    }, [championship.id])
 
     return <Modal
         open={true}

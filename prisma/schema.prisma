@@ -14,14 +14,15 @@ model cop_user {
 }
 
 model cop_word {
-  word          String
-  affected_at   DateTime? @db.Timestamp(6)
-  email         String?
-  id            Int       @id(map: "cop_word_pk") @default(autoincrement())
-  guesses       String?
-  success       Boolean?  @default(false)
-  current_line  Int?      @default(0)
-  current_guess String?
+  word            String
+  affected_at     DateTime? @db.Timestamp(6)
+  email           String?
+  id              Int       @id(map: "cop_word_pk") @default(autoincrement())
+  guesses         String?
+  success         Boolean?  @default(false)
+  current_line    Int?      @default(0)
+  current_guess   String?
+  championship_id Int
 }
 
 model cop_user_ranking {

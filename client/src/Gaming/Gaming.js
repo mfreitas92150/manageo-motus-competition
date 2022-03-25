@@ -1,16 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import { styled } from '@mui/material/styles';
-import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import { format, differenceInSeconds } from 'date-fns'
+import { differenceInSeconds } from 'date-fns'
 import useEventListener from '@use-it/event-listener'
-import ThumbUpIcon from '@mui/icons-material/ThumbUp';
-import ThumbDownIcon from '@mui/icons-material/ThumbDown';
-import BackspaceIcon from '@mui/icons-material/Backspace';
-import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
 import { Typography } from '@mui/material';
+import GamingHeader from './GamingHeader';
+import GamingKeyBoard from './GamingKeyBoard';
+import GamingTestMode from './GamingTestMode';
 
 const Item = styled(Paper)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
@@ -27,40 +25,17 @@ const MyStack = styled(Stack)(() => ({
     marginTop: "10px"
 }))
 
-const MyBox = styled(Box)({
-    margin: '20px 20px'
-})
-
-const MyRow = styled(Box)({
-    margin: '5px 20px'
-})
-
-const KeyBoardItem = styled(Paper)({
-    fontWeight: 'bold',
-    padding: '10px',
-});
-
-const MyBackspaceIcon = styled(BackspaceIcon)({
-    width: '15px',
-    height: '15px'
-})
-
-const MySubdirectoryArrowLeftIcon = styled(SubdirectoryArrowLeftIcon)({
-    width: '15px',
-    height: '15px'
-})
 
 const numberOfGuess = 6;
 
-export default function Gaming({ user }) {
+export default function Gaming({ user, championship }) {
 
-    const [startTime] = useState(new Date());
+    const [startTime, setStartTime] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
+    const [endTime, setEndTime] = useState(null);
 
-    const [lineCountStart, setLineCountStart] = useState(new Date());
+    const [lineCountStart, setLineCountStart] = useState(null);
     const [lineCountCurrent, setLineCountEnd] = useState(new Date());
-
-    const [intervalId, setIntervalId] = useState(null)
 
     const [badWord, setBadWord] = useState(false)
 
@@ -72,16 +47,15 @@ export default function Gaming({ user }) {
         badChars: [],
     });
 
-
-
     useEffect(() => {
-        fetch(`/api/user/word?email=${user.email}`)
+        fetch(`/api/user/word?email=${user.email}&championship=${championship.id}`)
             .then((res) => res.json())
             .then((data) => {
                 const guesses = JSON.parse(data.guesses);
                 const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
                 const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
                 const bads = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 0).map(g => g.char)
+
                 setState({
                     word: data.word,
                     currentGuess: JSON.parse(data.current_guess),
@@ -95,69 +69,20 @@ export default function Gaming({ user }) {
                 })
 
                 if (!data.success && data.current_line < 6) {
-                    const timer = setInterval(() => {
-                        setCurrentTime(new Date())
-                        setLineCountEnd(new Date())
-                    }, 1000)
-                    setIntervalId(timer)
+                    setStartTime(new Date())
+                    setLineCountStart(new Date())
+                    setLineCountEnd(new Date())
                 }
             })
-    }, [startTime])
 
-    useEffect(() => {
-        if (!state.word) {
-            return
-        }
-        if (state.currentLine >= 6) {
-            return
-        }
-        if (differenceInSeconds(lineCountCurrent, lineCountStart) >= process.env.REACT_APP_GAMING_LINE_COUNTER) {
-            setLineCountStart(new Date())
+        const timer = setInterval(() => {
+            setCurrentTime(new Date())
             setLineCountEnd(new Date())
-            setState({
-                ...state,
-                currentLine: state.currentLine + 1
-            })
-        }
-    }, [lineCountCurrent, lineCountStart, state])
+        }, 1000)
+        return () => clearInterval(timer)
+    }, [user.email, championship.id])
 
-    const displayTime = format(new Date(currentTime - startTime), 'mm:ss')
-
-    const addChar = (char) => {
-        const guess = [...state.guesses[state.currentLine], {
-            char: char,
-            state: 0
-        }]
-        const guesses = [...state.guesses]
-        guesses[state.currentLine] = guess
-        setState({
-            ...state,
-            guesses
-        })
-    }
-
-    const removeChar = () => {
-        const guess = [...state.guesses[state.currentLine]]
-        if (guess.length > 1) {
-            guess.pop()
-            const guesses = [...state.guesses]
-            guesses[state.currentLine] = guess
-            setState({
-                ...state,
-                guesses
-            })
-        }
-
-    }
-
-    const checkWord = () => {
-        const guess = [...state.guesses[state.currentLine]]
-        const word = state.word
-        const result = validWord(word, guess)
-        const guesses = [...state.guesses]
-        guesses[state.currentLine] = result
-        const success = !result.find(c => c.state !== 2);
-
+    const updateWord = useCallback((guess, guesses, success) => {
         fetch("/api/user/word", {
             method: "PUT",
             headers: {
@@ -174,6 +99,82 @@ export default function Gaming({ user }) {
                 id: state.id
             })
         })
+    }, [state, user.email])
+
+    useEffect(() => {
+        if (!state.word) {
+            return
+        }
+        if (state.currentLine >= 6) {
+            return
+        }
+        if (differenceInSeconds(lineCountCurrent, lineCountStart) >= process.env.REACT_APP_GAMING_LINE_COUNTER) {
+            setLineCountStart(new Date())
+            setLineCountEnd(new Date())
+            
+            const guess = [...state.guesses[state.currentLine]]
+            const guesses = [...state.guesses]
+            updateWord(guess, guesses, false)
+            
+            setState({
+                ...state,
+                currentLine: state.currentLine + 1
+            })
+            if ((state.currentLine >= 5)) {
+                setEndTime(new Date())
+                setLineCountStart(null)
+            }
+        }
+    }, [lineCountCurrent, lineCountStart, state, updateWord])
+
+
+    const addChar = (char) => {
+        if (!state.word || endTime) {
+            return
+        }
+        const guess = [...state.guesses[state.currentLine], {
+            char: char,
+            state: 0
+        }]
+        const guesses = [...state.guesses]
+        guesses[state.currentLine] = guess
+        setState({
+            ...state,
+            guesses
+        })
+    }
+
+    const removeChar = () => {
+        if (!state.word) {
+            return
+        }
+        const guess = [...state.guesses[state.currentLine]]
+        if (guess.length > 1) {
+            guess.pop()
+            const guesses = [...state.guesses]
+            guesses[state.currentLine] = guess
+            setState({
+                ...state,
+                guesses
+            })
+        }
+
+    }
+
+    
+
+    const checkWord = () => {
+        if (!state.word || endTime) {
+            return
+        }
+        const guess = [...state.guesses[state.currentLine]]
+        const word = state.word
+        const result = validWord(word, guess)
+        const guesses = [...state.guesses]
+        guesses[state.currentLine] = result
+        const success = !result.find(c => c.state !== 2);
+
+        updateWord(guess, guesses, success)
 
         const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
         const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
@@ -190,8 +191,9 @@ export default function Gaming({ user }) {
         })
         setLineCountStart(new Date())
         setLineCountEnd(new Date())
-        if (success) {
-            clearInterval(intervalId)
+        if (success || (state.currentLine >= 5)) {
+            setEndTime(new Date())
+            setLineCountStart(null)
         }
     }
 
@@ -233,6 +235,9 @@ export default function Gaming({ user }) {
     }
 
     useEventListener('keydown', (event) => {
+        if (!state.word) {
+            return
+        }
         const currentChar = event.key.length === 1 && event.key.toUpperCase().split()[0]
         const guess = state.guesses[state.currentLine]
         if (state.success) {
@@ -242,9 +247,10 @@ export default function Gaming({ user }) {
             removeChar()
             setBadWord(false)
         } else if (event.key === "Enter" && guess.length === state.word.length) {
-            fetch(`/api/user/valide?word=${guess.map(c => c.char).join('')}`)
+            fetch(`/api/user/valid?word=${guess.map(c => c.char).join('')}`)
+                .then(res => res.json())
                 .then(data => {
-                    if (data === "true") {
+                    if (data) {
                         checkWord()
                     } else {
                         setBadWord(true)
@@ -278,52 +284,27 @@ export default function Gaming({ user }) {
             rows.push(<MyStack direction="row" spacing={1} key={i}>{items}</MyStack>)
         }
     }
-    const getKeyBoardItem = (c, key) => {
-        if (c === 'DEL') {
-            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={removeChar}><MyBackspaceIcon /></KeyBoardItem>
-        }
-        if (c === 'ENTER') {
-            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
-        }
-        let style = {}
-        if (state.goodChars.includes(c)) {
-            style = {
-                backgroundColor: "#388AEA",
-                color: '#FFF'
-            }
-        } else if (state.inButNoPlaceChars.includes(c)) {
-            style = {
-                backgroundColor: "#FEF83C"
-            }
-        } else if (state.badChars.includes(c)) {
-            style = {
-                backgroundColor: "#D9CFD4",
-                color: '#FFF'
-            }
-        }
-        return <KeyBoardItem key={key} style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
-    }
-
-    const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((c, key) => getKeyBoardItem(c, key))
-    const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((c, key) => getKeyBoardItem(c, key))
-    const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map((c, key) => getKeyBoardItem(c, key))
 
     return <div>
-        <h2>Jeux {displayTime}</h2> 
+        <GamingHeader endTime={endTime} currentTime={currentTime} startTime={startTime} />
         {badWord && <Typography>Mot inconnu</Typography>}
-        {process.env.REACT_APP_TEST_MODE === "true" && <p>mot: {state.word}</p>}
-        {process.env.REACT_APP_TEST_MODE === "true" && <p>diff: {differenceInSeconds(lineCountCurrent, lineCountStart)}</p>}
-        {process.env.REACT_APP_TEST_MODE === "true" && <p>currentLine: {state.currentLine}</p>}
-        {process.env.REACT_APP_TEST_MODE === "true" && <div>{state.guesses.map((guess, key) => <p key={key}>{guess.map(c => `${c.char}:${c.state} `)}<br /></p>)}</div>}
+        {process.env.REACT_APP_TEST_MODE === "true" && <GamingTestMode
+            word={state.word}
+            lineCountCurrent={lineCountCurrent}
+            lineCountStart={lineCountStart}
+            currentLine={state.currentLine}
+            startTime={startTime}
+            currentTime={currentTime}
+            endTime={endTime}
+        />}
         {rows}
-        <MyRow>
-            <Stack direction="row" spacing={1}>{keyboardRow1}</Stack>
-        </MyRow>
-        <MyRow>
-            <Stack direction="row" spacing={1}>{keyboardRow2}</Stack>
-        </MyRow>
-        <MyRow>
-            <Stack direction="row" spacing={1}>{keyboardRow3}</Stack>
-        </MyRow>
+        <GamingKeyBoard
+            removeChar={removeChar}
+            checkWord={checkWord}
+            addChar={addChar}
+            goodChars={state.goodChars}
+            inButNoPlaceChars={state.inButNoPlaceChars}
+            badChars={state.badChars}
+        />
     </div>
 }

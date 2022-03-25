@@ -131,6 +131,10 @@ router.get("/championship", async (req, res) => {
 })
 
 router.get("/word", async (req, res) => {
+    if (!req.query.email || !req.query.championship) {
+        res.send(400)
+    }
+    console.info(req.query.championship)
     const dates = getDateWord()
     const index = getRandomInt(mots.availables.length - 1);
 
@@ -143,7 +147,8 @@ router.get("/word", async (req, res) => {
                     gte: dates.gt,
                     lte: dates.lt
                 },
-                email: req.query.email
+                email: req.query.email,
+                championship_id: parseInt(req.query.championship)
             }
         }
     })
@@ -161,6 +166,7 @@ router.get("/word", async (req, res) => {
             word,
             affected_at: dates.lt,
             email: req.query.email,
+            championship_id: parseInt(req.query.championship),
             guesses: JSON.stringify(guesses),
             current_guess: JSON.stringify([{
                 char: word[0],
@@ -191,10 +197,13 @@ router.put("/word", async (req, res) => {
     if (req.body.success) {
         rankingService.udpateRank(req.body.email, 6 - req.body.current_line)
     }
+    res.send(true)
 })
 
 router.get("/valid", (req, res) => {
-    res.send(`${mots.validates.includes(res.query.word)}`)
+    console.info(req.query.word)
+    const result = mots.validates.includes(req.query.word)
+    res.send(`${result}`)
 })
 
 module.exports = router;

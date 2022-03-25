@@ -45,7 +45,7 @@ export default function GamingHome({ user }) {
                 </Typography>
             }
         </Stack>
-        {championship.participate && <Gaming user={user}/>}
+        {championship.participate && <Gaming user={user} championship={championship}/>}
     </Container>
 
 }
