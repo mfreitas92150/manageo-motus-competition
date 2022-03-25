@@ -1,32 +1,19 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import { styled } from '@mui/material/styles';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
 import { differenceInSeconds } from 'date-fns'
 import useEventListener from '@use-it/event-listener'
-import { Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import GamingHeader from './GamingHeader';
 import GamingKeyBoard from './GamingKeyBoard';
 import GamingTestMode from './GamingTestMode';
+import GamingGrid from './GamingGrid';
+import styled from '@emotion/styled';
 
-const Item = styled(Paper)(({ theme }) => ({
-    backgroundColor: theme.palette.mode === 'dark' ? '#1A2027' : '#fff',
-    ...theme.typography.body2,
-    padding: theme.spacing(1),
-    textAlign: 'center',
-    width: '50px',
-    color: theme.palette.text.secondary,
-    fontWeight: 'bold',
-}));
-
-
-const MyStack = styled(Stack)(() => ({
-    marginTop: "10px"
-}))
-
-
-const numberOfGuess = 6;
+const MyBox = styled(Box)({
+    display: "flex",
+    alignItems: "center",
+    flexDirection: "column"
+})
 
 export default function Gaming({ user, championship }) {
 
@@ -111,11 +98,11 @@ export default function Gaming({ user, championship }) {
         if (differenceInSeconds(lineCountCurrent, lineCountStart) >= process.env.REACT_APP_GAMING_LINE_COUNTER) {
             setLineCountStart(new Date())
             setLineCountEnd(new Date())
-            
+
             const guess = [...state.guesses[state.currentLine]]
             const guesses = [...state.guesses]
             updateWord(guess, guesses, false)
-            
+
             setState({
                 ...state,
                 currentLine: state.currentLine + 1
@@ -161,7 +148,7 @@ export default function Gaming({ user, championship }) {
 
     }
 
-    
+
 
     const checkWord = () => {
         if (!state.word || endTime) {
@@ -262,29 +249,6 @@ export default function Gaming({ user, championship }) {
         }
     });
 
-    const rows = [];
-    if (state.guesses.length) {
-        for (let i = 0; i < numberOfGuess; i++) {
-            let items = [];
-            const guess = i < state.guesses.length ? state.guesses[i] : [];
-            for (let j = 0; j < state.word.length; j++) {
-                const colorIndex = guess.length > j ? guess[j].state : 0
-                let backgroundColor = "#F6F7FA";
-                if (colorIndex === 1) {
-                    backgroundColor = "#FEF83C";
-                } else if (colorIndex === 2) {
-                    backgroundColor = "#388AEA";
-                } else if (i > state.currentLine) {
-                    backgroundColor = "#DFDFDF";
-                }
-                items.push(<Item key={j} style={{
-                    backgroundColor: backgroundColor
-                }}>{guess.length > j ? guess[j].char : " "}</Item>)
-            }
-            rows.push(<MyStack direction="row" spacing={1} key={i}>{items}</MyStack>)
-        }
-    }
-
     return <div>
         <GamingHeader endTime={endTime} currentTime={currentTime} startTime={startTime} />
         {badWord && <Typography>Mot inconnu</Typography>}
@@ -297,14 +261,21 @@ export default function Gaming({ user, championship }) {
             currentTime={currentTime}
             endTime={endTime}
         />}
-        {rows}
-        <GamingKeyBoard
-            removeChar={removeChar}
-            checkWord={checkWord}
-            addChar={addChar}
-            goodChars={state.goodChars}
-            inButNoPlaceChars={state.inButNoPlaceChars}
-            badChars={state.badChars}
-        />
+        <MyBox>
+            <GamingGrid
+                guesses={state.guesses}
+                word={state.word}
+                currentLine={state.currentLine}
+            />
+            <GamingKeyBoard
+                removeChar={removeChar}
+                checkWord={checkWord}
+                addChar={addChar}
+                goodChars={state.goodChars}
+                inButNoPlaceChars={state.inButNoPlaceChars}
+                badChars={state.badChars}
+            />
+        </MyBox>
+
     </div>
 }

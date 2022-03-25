@@ -8,22 +8,29 @@ import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
 
 const MyRow = styled(Box)({
-    margin: '5px 20px'
+    
 })
 
 const KeyBoardItem = styled(Paper)({
     fontWeight: 'bold',
-    padding: '10px',
+    padding: '5px',
+    margin: '5px',
+    width: '30px',
+    height: '30px'
 });
 
 const MyBackspaceIcon = styled(BackspaceIcon)({
     width: '15px',
-    height: '15px'
+    height: '15px',
 })
 
 const MySubdirectoryArrowLeftIcon = styled(SubdirectoryArrowLeftIcon)({
     width: '15px',
-    height: '15px'
+    height: '15px',
+})
+
+const MyBox = styled(Box)({
+    marginTop: "10px"
 })
 
 export default function GamingKeyBoard({ removeChar, checkWord, addChar, goodChars, inButNoPlaceChars, badChars }) {
@@ -38,7 +45,7 @@ export default function GamingKeyBoard({ removeChar, checkWord, addChar, goodCha
         let style = {}
         if (goodChars.includes(c)) {
             style = {
-                backgroundColor: "#388AEA",
+                backgroundColor: "#F44336",
                 color: '#FFF'
             }
         } else if (inButNoPlaceChars.includes(c)) {
@@ -50,6 +57,11 @@ export default function GamingKeyBoard({ removeChar, checkWord, addChar, goodCha
                 backgroundColor: "#D9CFD4",
                 color: '#FFF'
             }
+        } else {
+            style= {
+                backgroundColor: "#2196F3",
+                color: '#FFF'
+            }
         }
         return <KeyBoardItem key={key} style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
     }
@@ -58,15 +70,15 @@ export default function GamingKeyBoard({ removeChar, checkWord, addChar, goodCha
     const keyboardRow2 = ['Q', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'].map((c, key) => getKeyBoardItem(c, key))
     const keyboardRow3 = ['W', 'X', 'C', 'V', 'B', 'N', 'DEL', 'ENTER'].map((c, key) => getKeyBoardItem(c, key))
 
-    return <>
+    return <MyBox>
         <MyRow>
-            <Stack direction="row" spacing={1}>{keyboardRow1}</Stack>
+            <Stack direction="row" spacing={0}>{keyboardRow1}</Stack>
         </MyRow>
         <MyRow>
-            <Stack direction="row" spacing={1}>{keyboardRow2}</Stack>
+            <Stack direction="row" spacing={0}>{keyboardRow2}</Stack>
         </MyRow>
         <MyRow>
-            <Stack direction="row" spacing={1}>{keyboardRow3}</Stack>
+            <Stack direction="row" spacing={0}>{keyboardRow3}</Stack>
         </MyRow>
-    </>
+    </MyBox>
 }
