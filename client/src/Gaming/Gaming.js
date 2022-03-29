@@ -134,7 +134,7 @@ export default function Gaming({ user, championship }) {
                 setEndTime(new Date())
                 setLineCountStart(null)
                 joke = "0 + 0 = La tête à JUL"
-            } 
+            }
             jokes.push(joke)
 
             setState({
@@ -177,6 +177,7 @@ export default function Gaming({ user, championship }) {
         if (!state.word) {
             return
         }
+        setBadWord(false)
         const guess = [...state.guesses[state.currentLine]]
         if (guess.length > 1) {
             guess.pop()
@@ -191,7 +192,7 @@ export default function Gaming({ user, championship }) {
     }
 
     const checkWord = () => {
-        if (!state.word || endTime) {
+        if (!state.word || endTime || state.guesses[state.currentLine].length !== state.word.length) {
             return
         }
         const guess = [...state.guesses[state.currentLine]]
@@ -214,19 +215,19 @@ export default function Gaming({ user, championship }) {
             setEndTime(new Date())
             setLineCountStart(null)
             if (success) {
-                
+
                 if (state.currentLine === 0) {
-                    joke =  'La chaaaaaaatte !'
+                    joke = 'La chaaaaaaatte !'
                 } else if (state.currentLine === 1) {
-                    joke =  'Bernard Pivot de la Duranne !'
+                    joke = 'Bernard Pivot de la Duranne !'
                 } else if (state.currentLine === 2) {
-                    joke =  'Un talent comme toi, devrait être augmenté immédiatement !'
+                    joke = 'Un talent comme toi, devrait être augmenté immédiatement !'
                 } else if (state.currentLine === 3) {
-                    joke =  'Moyenne : Note égale à la moitié de la note maximale.'
+                    joke = 'Moyenne : Note égale à la moitié de la note maximale.'
                 } else if (state.currentLine === 4) {
-                    joke =  'On en parlera lors de ton entretien annuel…'
+                    joke = 'On en parlera lors de ton entretien annuel…'
                 } else if (state.currentLine === 5) {
-                    joke =  "C'est un peu la honte quand même…"
+                    joke = "C'est un peu la honte quand même…"
                 }
             } else {
                 joke = "0 + 0 = La tête à JUL"
@@ -285,6 +286,22 @@ export default function Gaming({ user, championship }) {
             })]
     }
 
+    const validWordExistant = () => {
+        if(process.env.REACT_APP_TEST_MODE === "true"){
+            checkWord()
+            return
+        }
+        fetch(`/api/user/valid?word=${state.guesses[state.currentLine].map(c => c.char).join('')}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data) {
+                    checkWord()
+                } else {
+                    setBadWord(true)
+                }
+            })
+    }
+
     useEventListener('keydown', (event) => {
         if (!state.word) {
             return
@@ -297,19 +314,10 @@ export default function Gaming({ user, championship }) {
         }
         if (event.key === "Backspace" && guess.length > 1) {
             removeChar()
-            setBadWord(false)
             return
         }
-        if (event.key === "Enter" && guess.length === state.word.length) {
-            fetch(`/api/user/valid?word=${guess.map(c => c.char).join('')}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data) {
-                        checkWord()
-                    } else {
-                        setBadWord(true)
-                    }
-                })
+        if (event.key === "Enter" && state.guesses[state.currentLine].length === state.word.length) {
+            validWordExistant()
             return
         }
 
@@ -340,7 +348,11 @@ export default function Gaming({ user, championship }) {
                 />
                 <GamingKeyBoard
                     removeChar={removeChar}
-                    checkWord={checkWord}
+                    checkWord={() => {
+                        if (state.guesses[state.currentLine].length === state.word.length) {
+                            validWordExistant()
+                        }
+                    }}
                     addChar={addChar}
                     goodChars={state.goodChars}
                     inButNoPlaceChars={state.inButNoPlaceChars}

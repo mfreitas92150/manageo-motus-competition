@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { styled, useTheme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
 import Box from '@mui/material/Box';
 import MuiDrawer from '@mui/material/Drawer';
 import MuiAppBar from '@mui/material/AppBar';
@@ -20,14 +20,16 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import LogoutIcon from '@mui/icons-material/Logout';
 import LoginIcon from '@mui/icons-material/Login';
 import SettingsIcon from '@mui/icons-material/Settings';
+import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
+import HomeIcon from '@mui/icons-material/Home';
 
 import { useAuth0 } from "@auth0/auth0-react";
 
 import Admin from './Admin/Admin'
 import GamingHome from './Gaming/GamingHome'
-import Ranking from './Ranking'
+import Ranking from './Ranking/Ranking'
 import Landing from './Landing'
-import { fontSize } from '@mui/system';
+import Market from './Market/Market';
 
 const drawerWidth = 240;
 
@@ -120,7 +122,7 @@ export default function MiniDrawer() {
         }
       },
       MuiAppBar: {
-        
+
       }
     },
 
@@ -177,7 +179,10 @@ export default function MiniDrawer() {
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" noWrap component="div">
+          <Typography variant="h6" noWrap component="div" onClick={() => setState({
+            ...state,
+            page: null
+          })}>
             mMotus ({user && user.email})
           </Typography>
         </Toolbar>
@@ -192,17 +197,31 @@ export default function MiniDrawer() {
         {state.validate && <List>
           <ListItem button onClick={() => setState({
             ...state,
+            page: null
+          })}>
+            <ListItemIcon><HomeIcon /></ListItemIcon>
+            <ListItemText primary="mHome" />
+          </ListItem>
+          <ListItem button onClick={() => setState({
+            ...state,
             page: "gaming"
           })}>
             <ListItemIcon><GamesIcon /></ListItemIcon>
-            <ListItemText primary="Jeux" />
+            <ListItemText primary="mGame" />
+          </ListItem>
+          <ListItem button onClick={() => setState({
+            ...state,
+            page: "market"
+          })}>
+            <ListItemIcon><LocalGroceryStoreIcon /></ListItemIcon>
+            <ListItemText primary="mMarket" />
           </ListItem>
           <ListItem button onClick={() => setState({
             ...state,
             page: "ranking"
           })}>
             <ListItemIcon><InsightsIcon /></ListItemIcon>
-            <ListItemText primary="Classement" />
+            <ListItemText primary="mRanking" />
           </ListItem>
         </List>}
         <Divider />
@@ -248,8 +267,9 @@ export default function MiniDrawer() {
         {isAuthenticated && !state.validate && <Typography paragraph>
           Vous n'êtes pas validé par le maitre du jeux.
         </Typography>}
-        {state.validate && !state.page && <Landing />}
+        {state.validate && !state.page && <Landing user={user} />}
         {state.validate && state.page === 'gaming' && <GamingHome user={user} />}
+        {state.validate && state.page === 'market' && <Market user={user} />}
         {state.validate && state.page === 'ranking' && <Ranking />}
         {state.role === 'ADMIN' && state.page === 'admin' && <Admin />}
       </Box>
