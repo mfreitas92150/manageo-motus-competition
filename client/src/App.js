@@ -5,7 +5,7 @@ import MuiDrawer from '@mui/material/Drawer';
 import MuiAppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
 import List from '@mui/material/List';
-import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, CssBaseline, createTheme } from '@mui/material';
 import Typography from '@mui/material/Typography';
 import Divider from '@mui/material/Divider';
 import IconButton from '@mui/material/IconButton';
@@ -27,7 +27,7 @@ import Admin from './Admin/Admin'
 import GamingHome from './Gaming/GamingHome'
 import Ranking from './Ranking'
 import Landing from './Landing'
-
+import { fontSize } from '@mui/system';
 
 const drawerWidth = 240;
 
@@ -98,7 +98,33 @@ const Drawer = styled(MuiDrawer, { shouldForwardProp: (prop) => prop !== 'open' 
 );
 
 export default function MiniDrawer() {
-  const theme = useTheme();
+  const theme = createTheme({
+    palette: {
+      mode: 'dark',
+      background: {
+        paper: "#002D3E",
+        default: "#002D3E"
+      }
+    },
+    typography: {
+      fontFamily: 'Raleway, sans-serif',
+      fontSize: 14
+    },
+    components: {
+      MuiDrawer: {
+        styleOverrides: {
+          paper: {
+            background: "rgba(22, 28, 36, 0.5)",
+            backdropFilter: "blur(5px)"
+          }
+        }
+      },
+      MuiAppBar: {
+        
+      }
+    },
+
+  });
   const [state, setState] = useState({
     open: false,
     role: null,
@@ -134,7 +160,7 @@ export default function MiniDrawer() {
     });
   };
 
-  return (
+  return (<ThemeProvider theme={theme}>
     <Box sx={{ display: 'flex' }} >
       <CssBaseline />
       <AppBar position="fixed" open={state.open}>
@@ -217,16 +243,17 @@ export default function MiniDrawer() {
       <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
         <DrawerHeader />
         {!isAuthenticated && <Typography paragraph>
-          Connectez vous <LoginIcon  onClick={() => loginWithRedirect()} />
+          Connectez vous <LoginIcon onClick={() => loginWithRedirect()} />
         </Typography>}
         {isAuthenticated && !state.validate && <Typography paragraph>
           Vous n'êtes pas validé par le maitre du jeux.
         </Typography>}
         {state.validate && !state.page && <Landing />}
-        {state.validate && state.page === 'gaming' && <GamingHome user={user}/>}
+        {state.validate && state.page === 'gaming' && <GamingHome user={user} />}
         {state.validate && state.page === 'ranking' && <Ranking />}
         {state.role === 'ADMIN' && state.page === 'admin' && <Admin />}
       </Box>
     </Box>
+  </ThemeProvider>
   );
 }

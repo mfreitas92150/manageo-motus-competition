@@ -3,12 +3,44 @@ import React from 'react';
 import { styled } from '@mui/material/styles';
 import BackspaceIcon from '@mui/icons-material/Backspace';
 import SubdirectoryArrowLeftIcon from '@mui/icons-material/SubdirectoryArrowLeft';
-import Box from '@mui/material/Box';
-import Paper from '@mui/material/Paper';
-import Stack from '@mui/material/Stack';
+import { Grid, Stack, Paper, Box } from '@mui/material';
 
 const MyRow = styled(Box)({
-    
+    margin: '0.5em 0'
+})
+
+const Item = styled(Grid)(({ theme }) => ({
+    width: '1.7em',
+    height: '1.7em',
+    fontWeight: 'bold',
+    fontSize: 18,
+    border: '1px solid #FFF',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+
+    [theme.breakpoints.down('md')]: {
+
+    },
+}));
+
+const GoodItem = styled(Item)({
+    backgroundColor: '#F7786B',
+})
+
+const BadPlaceItem = styled(Grid)({
+    width: '1.6em',
+    height: '1.6em',
+    borderRadius: '1em',
+    backgroundColor: '#F0C510',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+})
+
+const BadWord = styled(Item)({
+    backgroundColor: '#D9CFD4',
+    opacity: 0.5
 })
 
 const KeyBoardItem = styled(Paper)({
@@ -37,33 +69,24 @@ export default function GamingKeyBoard({ removeChar, checkWord, addChar, goodCha
 
     const getKeyBoardItem = (c, key) => {
         if (c === 'DEL') {
-            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={removeChar}><MyBackspaceIcon /></KeyBoardItem>
+            return <Item size='small' key={key} variant='outlined' onClick={removeChar}><MyBackspaceIcon /></Item>
         }
         if (c === 'ENTER') {
-            return <KeyBoardItem size='small' key={key} variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></KeyBoardItem>
+            return <Item size='small' key={key} variant='outlined' onClick={checkWord}><MySubdirectoryArrowLeftIcon /></Item>
         }
         let style = {}
         if (goodChars.includes(c)) {
-            style = {
-                backgroundColor: "#F44336",
-                color: '#FFF'
-            }
+            return <GoodItem key={key} onClick={() => addChar(c)}>{c}</GoodItem>
         } else if (inButNoPlaceChars.includes(c)) {
-            style = {
-                backgroundColor: "#FEF83C"
-            }
+            return <Item key={key} ><BadPlaceItem onClick={() => addChar(c)}>{c}</BadPlaceItem></Item>
         } else if (badChars.includes(c)) {
             style = {
                 backgroundColor: "#D9CFD4",
                 color: '#FFF'
             }
-        } else {
-            style= {
-                backgroundColor: "#2196F3",
-                color: '#FFF'
-            }
-        }
-        return <KeyBoardItem key={key} style={style} onClick={() => addChar(c)}>{c}</KeyBoardItem>
+            return <BadWord key={key} onClick={() => addChar(c)}>{c}</BadWord>
+        } 
+        return <Item key={key} onClick={() => addChar(c)}>{c}</Item>
     }
 
     const keyboardRow1 = ['A', 'Z', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'].map((c, key) => getKeyBoardItem(c, key))
@@ -72,13 +95,13 @@ export default function GamingKeyBoard({ removeChar, checkWord, addChar, goodCha
 
     return <MyBox>
         <MyRow>
-            <Stack direction="row" spacing={0}>{keyboardRow1}</Stack>
+            <Stack direction="row" spacing={1}>{keyboardRow1}</Stack>
         </MyRow>
         <MyRow>
-            <Stack direction="row" spacing={0}>{keyboardRow2}</Stack>
+            <Stack direction="row" spacing={1}>{keyboardRow2}</Stack>
         </MyRow>
         <MyRow>
-            <Stack direction="row" spacing={0}>{keyboardRow3}</Stack>
+            <Stack direction="row" spacing={1}>{keyboardRow3}</Stack>
         </MyRow>
     </MyBox>
 }

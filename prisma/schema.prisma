@@ -49,3 +49,10 @@ model cop_championship_user {
   championship_id Int
   user_email      String
 }
+
+model cop_word_joke {
+  id        Int       @id(map: "cop_word_joke_pk") @default(autoincrement())
+  word_id   Int
+  joke      String
+  create_at DateTime? @db.Timestamp(6)
+}

@@ -20,6 +20,7 @@ const getDateWord = () => {
     const result = {
         lt: currrentDate
     }
+    
     if (updateWordDelay) {
         result.gt = datefns.subMinutes(currrentDate, updateWordDelay)
     } else {
@@ -134,7 +135,6 @@ router.get("/word", async (req, res) => {
     if (!req.query.email || !req.query.championship) {
         res.send(400)
     }
-    console.info(req.query.championship)
     const dates = getDateWord()
     const index = getRandomInt(mots.availables.length - 1);
 
@@ -153,7 +153,18 @@ router.get("/word", async (req, res) => {
         }
     })
     if (wordFromDb) {
-        res.send(wordFromDb)
+        const jokes = await prisma.cop_word_joke.findMany({
+            where: {
+                word_id: wordFromDb.id
+            },
+            orderBy: {
+                create_at: 'asc'
+            }
+        })
+        res.send({
+            ...wordFromDb,
+            jokes: jokes.map(joke => joke.joke)
+        })
     } else {
         const guesses = [];
         for (let i = 0; i < 6; i++) {
@@ -175,10 +186,10 @@ router.get("/word", async (req, res) => {
             current_line: 0,
             success: false,
         };
-
-        res.send(await prisma.cop_word.create({
+        const wordCreated = await prisma.cop_word.create({
             data: result
-        }))
+        })
+        res.send({ ...wordCreated, jokes: [] })
     }
 });
 
@@ -194,14 +205,19 @@ router.put("/word", async (req, res) => {
             current_guess: JSON.stringify(req.body.current_guess)
         },
     })
-    if (req.body.success) {
-        rankingService.udpateRank(req.body.email, 6 - req.body.current_line)
+    if (req.body.joke) {
+        await prisma.cop_word_joke.create({
+            data: {
+                word_id: req.body.id,
+                joke: req.body.joke,
+                create_at: new Date()
+            }
+        })
     }
     res.send(true)
 })
 
 router.get("/valid", (req, res) => {
-    console.info(req.query.word)
     const result = mots.validates.includes(req.query.word)
     res.send(`${result}`)
 })

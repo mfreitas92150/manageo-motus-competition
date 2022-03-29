@@ -2,12 +2,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { differenceInSeconds } from 'date-fns'
 import useEventListener from '@use-it/event-listener'
-import { Box, Typography } from '@mui/material';
-import GamingHeader from './GamingHeader';
+import { Box, Container, Typography, Grid } from '@mui/material';
 import GamingKeyBoard from './GamingKeyBoard';
 import GamingTestMode from './GamingTestMode';
 import GamingGrid from './GamingGrid';
 import styled from '@emotion/styled';
+import GamingCountDown from './GamingCountDown';
+import Gamingjoke from './GamingJoke';
 
 const MyBox = styled(Box)({
     display: "flex",
@@ -15,7 +16,21 @@ const MyBox = styled(Box)({
     flexDirection: "column"
 })
 
+const GamingContainer = styled(Grid)({
+    display: "flex",
+
+})
+
+const GameContainer = styled(Grid)({
+    marginRight: '8em'
+})
+
+const ChatContainer = styled(Container)({
+})
+
 export default function Gaming({ user, championship }) {
+
+    const [started, setStarted] = useState(false)
 
     const [startTime, setStartTime] = useState(null);
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -32,6 +47,7 @@ export default function Gaming({ user, championship }) {
         goodChars: [],
         inButNoPlaceChars: [],
         badChars: [],
+        jokes: [],
     });
 
     useEffect(() => {
@@ -53,12 +69,11 @@ export default function Gaming({ user, championship }) {
                     goodChars: goods,
                     inButNoPlaceChars: almosts,
                     badChars: bads,
+                    jokes: data.jokes,
                 })
 
                 if (!data.success && data.current_line < 6) {
                     setStartTime(new Date())
-                    setLineCountStart(new Date())
-                    setLineCountEnd(new Date())
                 }
             })
 
@@ -69,7 +84,7 @@ export default function Gaming({ user, championship }) {
         return () => clearInterval(timer)
     }, [user.email, championship.id])
 
-    const updateWord = useCallback((guess, guesses, success) => {
+    const updateWord = useCallback((guess, guesses, success, joke) => {
         fetch("/api/user/word", {
             method: "PUT",
             headers: {
@@ -83,7 +98,8 @@ export default function Gaming({ user, championship }) {
                 guesses,
                 success,
                 email: user.email,
-                id: state.id
+                id: state.id,
+                joke
             })
         })
     }, [state, user.email])
@@ -99,26 +115,52 @@ export default function Gaming({ user, championship }) {
             setLineCountStart(new Date())
             setLineCountEnd(new Date())
 
-            const guess = [...state.guesses[state.currentLine]]
-            const guesses = [...state.guesses]
-            updateWord(guess, guesses, false)
+            const guess = [{
+                char: state.word.substring(0, 1),
+                state: 2
+            }]
 
-            setState({
-                ...state,
-                currentLine: state.currentLine + 1
-            })
+            for (let i = 1; i < state.word.length; i++) {
+                guess.push({
+                    char: '',
+                    state: 3
+                })
+            }
+            const guesses = [...state.guesses]
+            guesses[state.currentLine] = guess
+            const jokes = [...state.jokes]
+            let joke = "Accélère ! On dirait Charlotte !";
             if ((state.currentLine >= 5)) {
                 setEndTime(new Date())
                 setLineCountStart(null)
-            }
+                joke = "0 + 0 = La tête à JUL"
+            } 
+            jokes.push(joke)
+
+            setState({
+                ...state,
+                guesses,
+                currentLine: state.currentLine + 1,
+                jokes
+            })
+
+            updateWord(guess, guesses, false, joke)
         }
     }, [lineCountCurrent, lineCountStart, state, updateWord])
 
+
+    const startLineCounter = () => {
+        if (!state.success && state.currentLine < 6 && !lineCountStart) {
+            setLineCountStart(new Date())
+            setLineCountEnd(new Date())
+        }
+    }
 
     const addChar = (char) => {
         if (!state.word || endTime) {
             return
         }
+        startLineCounter()
         const guess = [...state.guesses[state.currentLine], {
             char: char,
             state: 0
@@ -148,8 +190,6 @@ export default function Gaming({ user, championship }) {
 
     }
 
-
-
     const checkWord = () => {
         if (!state.word || endTime) {
             return
@@ -161,11 +201,38 @@ export default function Gaming({ user, championship }) {
         guesses[state.currentLine] = result
         const success = !result.find(c => c.state !== 2);
 
-        updateWord(guess, guesses, success)
-
         const goods = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 2).map(g => g.char)
         const almosts = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 1).map(g => g.char)
         const bads = guesses.flatMap(g => g.filter((c, index) => index > 0)).filter(g => g.state === 0).map(g => g.char)
+
+        setLineCountStart(new Date())
+        const jokes = [...state.jokes]
+
+        setLineCountEnd(new Date())
+        let joke
+        if (success || (state.currentLine >= 5)) {
+            setEndTime(new Date())
+            setLineCountStart(null)
+            if (success) {
+                
+                if (state.currentLine === 0) {
+                    joke =  'La chaaaaaaatte !'
+                } else if (state.currentLine === 1) {
+                    joke =  'Bernard Pivot de la Duranne !'
+                } else if (state.currentLine === 2) {
+                    joke =  'Un talent comme toi, devrait être augmenté immédiatement !'
+                } else if (state.currentLine === 3) {
+                    joke =  'Moyenne : Note égale à la moitié de la note maximale.'
+                } else if (state.currentLine === 4) {
+                    joke =  'On en parlera lors de ton entretien annuel…'
+                } else if (state.currentLine === 5) {
+                    joke =  "C'est un peu la honte quand même…"
+                }
+            } else {
+                joke = "0 + 0 = La tête à JUL"
+            }
+            jokes.push(joke)
+        }
 
         setState({
             ...state,
@@ -175,13 +242,10 @@ export default function Gaming({ user, championship }) {
             inButNoPlaceChars: almosts,
             badChars: bads,
             currentLine: success ? state.currentLine : state.currentLine + 1,
+            jokes
         })
-        setLineCountStart(new Date())
-        setLineCountEnd(new Date())
-        if (success || (state.currentLine >= 5)) {
-            setEndTime(new Date())
-            setLineCountStart(null)
-        }
+
+        updateWord(guess, guesses, success, joke)
     }
 
     const validWord = (word, guess) => {
@@ -225,6 +289,7 @@ export default function Gaming({ user, championship }) {
         if (!state.word) {
             return
         }
+
         const currentChar = event.key.length === 1 && event.key.toUpperCase().split()[0]
         const guess = state.guesses[state.currentLine]
         if (state.success) {
@@ -233,7 +298,9 @@ export default function Gaming({ user, championship }) {
         if (event.key === "Backspace" && guess.length > 1) {
             removeChar()
             setBadWord(false)
-        } else if (event.key === "Enter" && guess.length === state.word.length) {
+            return
+        }
+        if (event.key === "Enter" && guess.length === state.word.length) {
             fetch(`/api/user/valid?word=${guess.map(c => c.char).join('')}`)
                 .then(res => res.json())
                 .then(data => {
@@ -243,39 +310,48 @@ export default function Gaming({ user, championship }) {
                         setBadWord(true)
                     }
                 })
+            return
+        }
 
-        } else if (currentChar && currentChar.match(/[A-Z]/g) && guess.length < state.word.length) {
+        startLineCounter()
+        if (currentChar && currentChar.match(/[A-Z]/g) && guess.length < state.word.length) {
             addChar(currentChar)
+            return
         }
     });
 
-    return <div>
-        <GamingHeader endTime={endTime} currentTime={currentTime} startTime={startTime} />
-        {badWord && <Typography>Mot inconnu</Typography>}
-        {process.env.REACT_APP_TEST_MODE === "true" && <GamingTestMode
-            word={state.word}
-            lineCountCurrent={lineCountCurrent}
-            lineCountStart={lineCountStart}
-            currentLine={state.currentLine}
-            startTime={startTime}
-            currentTime={currentTime}
-            endTime={endTime}
-        />}
-        <MyBox>
-            <GamingGrid
-                guesses={state.guesses}
+    return <GamingContainer>
+        <GameContainer maxWidth="sm">
+            <Typography>{badWord && "Mot inconnu"}</Typography>
+            {process.env.REACT_APP_TEST_MODE === "true" && <GamingTestMode
                 word={state.word}
+                lineCountCurrent={lineCountCurrent}
+                lineCountStart={lineCountStart}
                 currentLine={state.currentLine}
-            />
-            <GamingKeyBoard
-                removeChar={removeChar}
-                checkWord={checkWord}
-                addChar={addChar}
-                goodChars={state.goodChars}
-                inButNoPlaceChars={state.inButNoPlaceChars}
-                badChars={state.badChars}
-            />
-        </MyBox>
+                startTime={startTime}
+                currentTime={currentTime}
+                endTime={endTime}
+            />}
+            <MyBox>
+                <GamingGrid
+                    guesses={state.guesses}
+                    word={state.word}
+                    currentLine={state.currentLine}
+                />
+                <GamingKeyBoard
+                    removeChar={removeChar}
+                    checkWord={checkWord}
+                    addChar={addChar}
+                    goodChars={state.goodChars}
+                    inButNoPlaceChars={state.inButNoPlaceChars}
+                    badChars={state.badChars}
+                />
+            </MyBox>
 
-    </div>
+        </GameContainer>
+        <ChatContainer>
+            <GamingCountDown started={started} lineCountStart={lineCountStart} lineCountCurrent={lineCountCurrent} />
+            <Gamingjoke jokes={state.jokes} />
+        </ChatContainer>
+    </GamingContainer>
 }
