@@ -17,7 +17,6 @@ const getDateWord = () => {
     lt: currrentDate,
   };
 
-  console.info(updateWordDelay)
   if (updateWordDelay) {
     result.gt = datefns.subMinutes(currrentDate, updateWordDelay);
   } else {

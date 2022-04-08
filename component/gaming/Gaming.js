@@ -171,7 +171,6 @@ export default function Gaming({ user, championship }) {
 
   const startLineCounter = () => {
     if (!state.success && state.currentLine < 6 && !lineCountStart) {
-      console.info("startLineCounter");
       setLineCountStart(new Date());
       setLineCountEnd(new Date());
     }
@@ -388,7 +387,6 @@ export default function Gaming({ user, championship }) {
               state={state}
             />
           )}
-          {process.env.NEXT_PUBLIC_TEST_MODE && (
             <GamingTestMode
               started={started}
               startTime={startTime}
@@ -400,7 +398,6 @@ export default function Gaming({ user, championship }) {
               state={state}
               championship={championship}
             />
-          )}
           <GamingCountDown
             started={started}
             lineCountStart={lineCountStart}
