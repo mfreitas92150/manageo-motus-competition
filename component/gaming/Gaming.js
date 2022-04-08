@@ -149,14 +149,14 @@ export default function Gaming({ user, championship }) {
       const guesses = [...state.guesses];
       guesses[state.currentLine] = guess;
       const jokes = [];
-      let joke = "Accélère ! On dirait Charlotte !";
       if (state.currentLine >= 5) {
         setEndTime(new Date());
         setLineCountStart(null);
-        joke = "0 + 0 = La tête à JUL";
         setGamingResultOpen(true);
+      } else {
+        jokes.push("Accélère ! On dirait Charlotte !");
       }
-      jokes.push(joke);
+      
 
       setState({
         ...state,
@@ -324,7 +324,7 @@ export default function Gaming({ user, championship }) {
   };
 
   const validWordExistant = () => {
-    if (process.env.REACT_APP_TEST_MODE === "true") {
+    if (process.env.NEXT_PUBLIC_TEST_MODE === "true") {
       checkWord();
       return;
     }
@@ -398,6 +398,7 @@ export default function Gaming({ user, championship }) {
               lineCountCurrent={lineCountCurrent}
               badWord={badWord}
               state={state}
+              championship={championship}
             />
           )}
           <GamingCountDown

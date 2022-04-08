@@ -62,7 +62,7 @@ export default function GamingGrid({ guesses, word, currentLine }) {
             }
 
             rows.push(<Stack direction="row" spacing={0} key={i}>
-                <CurrentLineGrid>{i === currentLine && <ArrowRightIcon />}</CurrentLineGrid>
+                <CurrentLineGrid container justifyContent={'center'} alignItems={'center'} >{i === currentLine && <ArrowRightIcon />}</CurrentLineGrid>
                 {items}
             </Stack>)
         }

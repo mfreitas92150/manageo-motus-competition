@@ -25,6 +25,7 @@ export default function GamingTestMode({
   lineCountCurrent,
   badWord,
   state,
+  championship,
 }) {
   return (
     <>
@@ -33,19 +34,19 @@ export default function GamingTestMode({
           <MyPaper>mot</MyPaper>
         </Grid>
         <Grid item xs={2}>
-          <MyTypo>{state.word}</MyTypo>
+          <MyTypo>{`${state.id}: ${state.word}`}</MyTypo>
+        </Grid>
+        <Grid item xs={2}>
+          <MyPaper>championship</MyPaper>
+        </Grid>
+        <Grid item xs={2}>
+          <MyTypo>{championship.id}</MyTypo>
         </Grid>
         <Grid item xs={2}>
           <MyPaper>currentLine</MyPaper>
         </Grid>
         <Grid item xs={2}>
           <MyTypo>{state.currentLine}</MyTypo>
-        </Grid>
-        <Grid item xs={2}>
-          <MyPaper>success</MyPaper>
-        </Grid>
-        <Grid item xs={2}>
-          <MyTypo>{state.success ? "true" : "false"}</MyTypo>
         </Grid>
         
         <Grid item xs={2}>
@@ -57,8 +58,14 @@ export default function GamingTestMode({
         <Grid item xs={2}>
           <MyPaper>badWord</MyPaper>
         </Grid>
-        <Grid item xs={5}>
+        <Grid item xs={2}>
           <MyTypo>{badWord ? "true" : "false"}</MyTypo>
+        </Grid>
+        <Grid item xs={2}>
+          <MyPaper>success</MyPaper>
+        </Grid>
+        <Grid item xs={2}>
+          <MyTypo>{state.success ? "true" : "false"}</MyTypo>
         </Grid>
 
         <Grid item xs={2}>
