@@ -56,3 +56,12 @@ model cop_word_joke {
   joke      String
   create_at DateTime? @db.Timestamp(6)
 }
+
+model cop_user_penalty {
+  id             Int       @id(map: "cop_user_penalty_pk") @default(autoincrement())
+  user_affecting String?
+  penalty        String?
+  affected       Boolean?  @default(false)
+  user_affected  String?
+  create_at      DateTime? @default(now()) @db.Timestamp(6)
+}
